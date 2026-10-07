@@ -1,0 +1,81 @@
+{
+  "id": "bakery-real",
+  "name": "Plan de producción — panadería (PLACEHOLDER)",
+  "description": "PLACEHOLDER: P1 debe reemplazar por el caso real del grupo (empresa, datos con fuente y supuestos). Todos los límites son <= para que Simplex y Gran M resuelvan el mismo modelo.",
+  "kind": "real",
+  "problem": {
+    "name": "Plan de producción — panadería",
+    "variables": [
+      {
+        "name": "pandesal",
+        "unit": "lotes"
+      },
+      {
+        "name": "hojaldre",
+        "unit": "lotes"
+      },
+      {
+        "name": "croissant",
+        "unit": "lotes"
+      }
+    ],
+    "objective": {
+      "sense": "max",
+      "coefficients": [
+        "40",
+        "30",
+        "25"
+      ]
+    },
+    "constraints": [
+      {
+        "name": "horas_horno",
+        "coefficients": [
+          "1",
+          "0.8",
+          "1.5"
+        ],
+        "op": "<=",
+        "rhs": "60"
+      },
+      {
+        "name": "kg_harina",
+        "coefficients": [
+          "0.5",
+          "0.4",
+          "0.3"
+        ],
+        "op": "<=",
+        "rhs": "100"
+      },
+      {
+        "name": "horas_moldeado",
+        "coefficients": [
+          "0.3",
+          "0.5",
+          "0.7"
+        ],
+        "op": "<=",
+        "rhs": "35"
+      },
+      {
+        "name": "demanda_max_pandesal",
+        "coefficients": [
+          "1",
+          "0",
+          "0"
+        ],
+        "op": "<=",
+        "rhs": "70"
+      }
+    ]
+  },
+  "expected": {
+    "simplex": {
+      "status": "optimal"
+    },
+    "big_m": {
+      "status": "optimal"
+    }
+  }
+}

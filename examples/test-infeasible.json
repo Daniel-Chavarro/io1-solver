@@ -1,0 +1,47 @@
+{
+  "id": "test-infeasible",
+  "name": "PL infactible",
+  "description": "x1<=2 y x1>=5: Gran M deja una artificial en base (infactible); Simplex no admite la restriccion >=.",
+  "kind": "infeasible",
+  "problem": {
+    "name": "Infactible",
+    "variables": [
+      {
+        "name": "x1",
+        "unit": "u"
+      }
+    ],
+    "objective": {
+      "sense": "max",
+      "coefficients": [
+        "1"
+      ]
+    },
+    "constraints": [
+      {
+        "name": "c1",
+        "coefficients": [
+          "1"
+        ],
+        "op": "<=",
+        "rhs": "2"
+      },
+      {
+        "name": "c2",
+        "coefficients": [
+          "1"
+        ],
+        "op": ">=",
+        "rhs": "5"
+      }
+    ]
+  },
+  "expected": {
+    "simplex": {
+      "admissible": false
+    },
+    "big_m": {
+      "status": "infeasible"
+    }
+  }
+}

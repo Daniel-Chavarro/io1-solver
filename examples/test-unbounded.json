@@ -1,0 +1,45 @@
+{
+  "id": "test-unbounded",
+  "name": "PL no acotado",
+  "description": "max x1+x2 con x1-x2<=2: la direccion (1,1) mantiene factibilidad, z crece sin limite.",
+  "kind": "test",
+  "problem": {
+    "name": "No acotado",
+    "variables": [
+      {
+        "name": "x1",
+        "unit": "u"
+      },
+      {
+        "name": "x2",
+        "unit": "u"
+      }
+    ],
+    "objective": {
+      "sense": "max",
+      "coefficients": [
+        "1",
+        "1"
+      ]
+    },
+    "constraints": [
+      {
+        "name": "c1",
+        "coefficients": [
+          "1",
+          "-1"
+        ],
+        "op": "<=",
+        "rhs": "2"
+      }
+    ]
+  },
+  "expected": {
+    "simplex": {
+      "status": "unbounded"
+    },
+    "big_m": {
+      "status": "unbounded"
+    }
+  }
+}
