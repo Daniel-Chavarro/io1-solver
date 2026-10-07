@@ -66,10 +66,21 @@ uno infactible).
 - Verificación aparte (Excel Solver) → informe en `docs/informe/`.
 - Declaración de uso de IA → informe final.
 
-## Flujo de trabajo
+## Flujo de trabajo (GitFlow simplificado)
 
-- Ramas `feat/*` / `fix/*` → PR a `main` (protegida: 1 aprobación + CI verde).
-- Cada issue define su DoD y referencia `docs/contracts.md`.
+- `main` = entregables (tags por entrega). **Solo recibe PRs desde `develop`**
+  (exigido por el job `guard-main-base` del CI).
+- `develop` = rama de integración. Protegida igual que `main`: 1 aprobación + CI verde.
+- Ramas de trabajo → PR a `develop`: `feat/<issue>-<slug>` (p. ej.
+  `feat/4-frac-m`) y `fix/<issue>-<slug>`. Se borran tras el merge.
+- Los issues definen el DoD y referencian `docs/contracts.md`.
+
+### Convención de commits (no verificada por CI — es acuerdo del grupo)
+
+- `feat:` / `fix:` / `docs:` / `test:` / `chore:` / `refactor:` —
+  p. ej. `feat: FracM con orden lexicográfico (#4)`.
+- Cuerpo en lo que se hizo y por qué; referencia la issue (`(#N)`) en la
+  primera línea o en el cuerpo.
 
 ## Tags de entrega
 
