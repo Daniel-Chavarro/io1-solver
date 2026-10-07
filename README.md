@@ -66,21 +66,22 @@ uno infactible).
 - Verificación aparte (Excel Solver) → informe en `docs/informe/`.
 - Declaración de uso de IA → informe final.
 
-## Flujo de trabajo (GitFlow simplificado)
+## Flujo de trabajo
+
+Objetivo: **que no se pierda código**. Solo hay reglas de flujo — sin
+convención obligatoria de nombres de ramas ni de commits (decisión del grupo).
 
 - `main` = entregables (tags por entrega). **Solo recibe PRs desde `develop`**
-  (exigido por el job `guard-main-base` del CI).
-- `develop` = rama de integración. Protegida igual que `main`: 1 aprobación + CI verde.
-- Ramas de trabajo → PR a `develop`: `feat/<issue>-<slug>` (p. ej.
-  `feat/4-frac-m`) y `fix/<issue>-<slug>`. Se borran tras el merge.
-- Los issues definen el DoD y referencian `docs/contracts.md`.
+  (lo exige el job `guard-main-base` del CI).
+- `develop` = rama de integración: todo el trabajo se integra aquí con PR.
+- El flujo es siempre: rama propia → PR a `develop` → PR a `main`.
 
-### Convención de commits (no verificada por CI — es acuerdo del grupo)
+Lo que evita perder código (ya configurado en el repo):
 
-- `feat:` / `fix:` / `docs:` / `test:` / `chore:` / `refactor:` —
-  p. ej. `feat: FracM con orden lexicográfico (#4)`.
-- Cuerpo en lo que se hizo y por qué; referencia la issue (`(#N)`) en la
-  primera línea o en el cuerpo.
+- `main` y `develop` protegidas: sin push directo, sin force-push, sin borrar
+  la rama; historia lineal (squash al mergear).
+- Todo merge exige CI verde + 1 aprobación: nadie pisa el trabajo de otro
+  sin que se vea en el diff del PR.
 
 ## Tags de entrega
 
