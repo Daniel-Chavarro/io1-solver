@@ -68,8 +68,20 @@ uno infactible).
 
 ## Flujo de trabajo
 
-- Ramas `feat/*` / `fix/*` → PR a `main` (protegida: 1 aprobación + CI verde).
-- Cada issue define su DoD y referencia `docs/contracts.md`.
+Objetivo: **que no se pierda código**. Solo hay reglas de flujo — sin
+convención obligatoria de nombres de ramas ni de commits (decisión del grupo).
+
+- `main` = entregables (tags por entrega). **Solo recibe PRs desde `develop`**
+  (lo exige el job `guard-main-base` del CI).
+- `develop` = rama de integración: todo el trabajo se integra aquí con PR.
+- El flujo es siempre: rama propia → PR a `develop` → PR a `main`.
+
+Lo que evita perder código (ya configurado en el repo):
+
+- `main` y `develop` protegidas: sin push directo, sin force-push, sin borrar
+  la rama; historia lineal (squash al mergear).
+- Todo merge exige CI verde + 1 aprobación: nadie pisa el trabajo de otro
+  sin que se vea en el diff del PR.
 
 ## Tags de entrega
 

@@ -2,10 +2,25 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, develop]
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
+  # main only accepts PRs coming from develop (GitFlow simplificado).
+  # Runs BEFORE the test jobs so a wrong-base PR fails fast.
+  guard-main-base:
+    if: github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fail unless the PR targets main from develop
+        if: github.event.pull_request.head.ref != 'develop'
+        run: |
+          echo "::error::Los PRs a main solo se aceptan desde 'develop' (GitFlow). Ramas feat/fix integran primero en develop."
+          exit 1
+
   backend-tests:
     runs-on: ubuntu-latest
     defaults:
