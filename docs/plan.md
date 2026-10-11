@@ -23,7 +23,7 @@ respuesta define lo que cuelga de ella.
 | Q10/Q15 | Ejecución | **Ruta A oficial**: `uv sync && uv run uvicorn solver.main:app` con `dist/` commiteado por tag (sin Node para el docente). **Ruta B**: docker compose + Dockerfile dentro de cada app | Solo Docker (dependencia de red/Docker en la sustentación) |
 | Q11 | Sensibilidad | Genérica: funciona sobre cualquier PL resuelto en la UI | Solo el caso real |
 | Q12 | UI | Tailwind | MUI/AntD (peso innecesario) |
-| Q13/Q16 | Navegación de resultados | Stepper ◀ ▶ + "ver todas"; pestañas por método (`Simplex | Gran M | Comparación | Sensibilidad`) | Tablas apiladas, acordeón |
+| Q13/Q16 | Navegación de resultados | Stepper ◀ ▶ + "ver todas"; pestañas `Resolver \| Comparación \| Sensibilidad` con selector de método global en el formulario (ver `docs/frontend-plan.md`, que sustituye a las pestañas por método) | Tablas apiladas, acordeón |
 | Q14 | Comparación | Sección automática con métricas (`/api/comparar`, `perf_counter`) | — |
 | Q17 | Dos Fases | **Fuera de alcance**; solo si alguien es proactivo y todo lo demás está verde | Incluirlo en el alcance |
 | Q18 | Endpoint unificado | `POST /api/resolver {problem, method}` — `method` elige el par constructor+intérprete (el motor es el mismo) | Un endpoint por método |
