@@ -13,23 +13,22 @@ from fractions import Fraction
 class FracM:
     const: Fraction
     m: Fraction = Fraction(0)
-
-    # TODO(P3 - Niko784): implement per docs/contracts.md section 2:
-    #   add / sub / neg / mul_fraction, __lt__/__eq__ (lexicographic),
-    #   to_str() -> "5" | "3/4" | "M" | "-3M" | "-M-30" | "2M+1/3"
-    #   parse_decimal(s) -> FracM  (via Decimal, exact)
     
     def __add__(self, other: "FracM") -> "FracM":
-        raise NotImplementedError("frac_m.FracM.__add__")
+        const = self.const + other.const
+        m = self.m + other.m
+        return FracM(const, m)
     
     def __sub__(self, other: "FracM") -> "FracM":
-        raise NotImplementedError("frac_m.FracM.__sub__")
+        const = self.const - other.const
+        m = self.m - other.m
+        return FracM(const, m)
     
     def __neg__(self) -> "FracM":
-        raise NotImplementedError("frac_m.FracM.__neg__")
+        return FracM(-self.const, -self.m)
     
-    def __mult__(self, other: Fraction) -> "FracM":
-        raise NotImplementedError("frac_m.FracM.__mult__")
+    def __mult__(self, other: "FracM") -> "FracM":
+        const =  
 
     def __lt__(self, other: "FracM") -> bool:
         raise NotImplementedError("frac_m.FracM.__lt__")
