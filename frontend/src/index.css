@@ -1,1 +1,95 @@
 @import "tailwindcss";
+
+/*
+ * Identidad: el cuaderno cuadriculado donde se resuelve el simplex a mano.
+ * Papel con cuadrícula azul, tinta azul-negra, esfero rojo solo para el
+ * pivote y la acción principal, verde de corrección para el óptimo.
+ */
+@theme {
+  --color-paper: #fcfbf7;
+  --color-ink: #1e2d4f;
+  --color-ink-soft: #5a6b8e;
+  --color-rule: #b7c9e4;
+  --color-rule-strong: #748db8;
+  --color-rule-wash: #e9eef7;
+  --color-pen: #c22f21;
+  --color-pen-wash: #faecea;
+  --color-grade: #1c7a45;
+  --color-grade-wash: #e8f3ec;
+  --color-warn: #8a6100;
+  --color-warn-wash: #f9efd6;
+
+  --font-display: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia,
+    "Times New Roman", serif;
+  --font-sans: ui-sans-serif, system-ui, "Segoe UI", Roboto, Arial, sans-serif;
+}
+
+@layer base {
+  body {
+    font-family: var(--font-sans);
+    color: var(--color-ink);
+    background-color: var(--color-paper);
+    background-image:
+      linear-gradient(
+        to right,
+        color-mix(in srgb, var(--color-rule) 45%, transparent) 1px,
+        transparent 1px
+      ),
+      linear-gradient(
+        to bottom,
+        color-mix(in srgb, var(--color-rule) 45%, transparent) 1px,
+        transparent 1px
+      );
+    background-size: 26px 26px;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-rule-strong);
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+@layer components {
+  /* Hoja: panel opaco que tapa la cuadrícula, como página sobre el cuaderno. */
+  .sheet {
+    @apply rounded-lg border border-rule/70 bg-paper;
+  }
+
+  .field {
+    @apply w-full rounded-md border border-rule-strong/50 bg-white/80 px-2.5 py-1.5 text-sm text-ink transition-colors placeholder:text-ink-soft/50 hover:border-rule-strong focus:border-rule-strong;
+  }
+
+  .field-error {
+    @apply border-pen focus:border-pen;
+  }
+
+  .btn {
+    @apply inline-flex items-center justify-center gap-1.5 rounded-md px-3.5 py-1.5 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  .btn-primary {
+    @apply bg-pen text-paper hover:bg-pen/90;
+  }
+
+  .btn-quiet {
+    @apply border border-rule-strong/50 bg-white/60 text-ink hover:border-rule-strong hover:bg-white;
+  }
+
+  .btn-ghost {
+    @apply text-ink-soft hover:text-ink;
+  }
+
+  /* Números del tableau: serif con cifras tabulares, como tabla de libro. */
+  .tnum {
+    font-variant-numeric: tabular-nums;
+  }
+}

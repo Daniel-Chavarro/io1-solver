@@ -2,7 +2,12 @@
 // always decimal strings rendered as-is; the frontend never computes.
 export type Sense = "max" | "min";
 export type Op = "<=" | ">=" | "=";
+export type MethodId = "simplex" | "big_m";
 
+export const METHOD_NAMES: Record<string, string> = {
+  simplex: "Simplex",
+  big_m: "Gran M",
+};
 export interface Variable { name: string; unit: string }
 export interface Constraint { name: string; coefficients: string[]; op: Op; rhs: string }
 export interface Objective { sense: Sense; coefficients: string[] }
@@ -20,6 +25,13 @@ export interface Iteration {
   ratios: string[];
   ties: string[];
 }
+
+export type SpecialCaseType =
+  | "degenerate_pivot"
+  | "alternative_optima"
+  | "unbounded"
+  | "infeasible"
+  | "normalized_constraint";
 
 export interface SpecialCase { type: string; iteration: number | null; detail: string }
 export interface VariableValue { name: string; unit: string; value: string }
