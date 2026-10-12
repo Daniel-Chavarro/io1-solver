@@ -1,6 +1,6 @@
 # Contratos internos y de API — Grupo 3 · proyecto `solver`
 
-> Versión 0.1 — base para los issues. Código en inglés; mensajes mostrados al usuario en español.
+> Versión 0.2 — formato tabular $C_j - Z_j$. Código en inglés; mensajes mostrados al usuario en español.
 > Regla del curso que este documento respeta: los datos NUNCA van escritos en el código (todo entra por la interfaz/API), y ningún método usa una librería que resuelva por él.
 
 ## 0. Convención numérica (transversal)
@@ -62,25 +62,37 @@ class FracM:
 
 ```python
 class Row:
-    basic: str          # "x1" | "s1" | "e1" | "a1" | "z"
+    basic: str          # V_B: "x" | "s1" | "e1" | "a1"
+    cb: FracM           # C_B: coeficiente del objetivo de la variable básica
     cells: list[FracM]  # len == len(columns)
 
 class Tableau:
-    columns: list[str]   # variables originales + auxiliares + "rhs"
-    rows: list[Row]     # rows[0] es SIEMPRE la fila z
+    sense: Literal["max", "min"]
+    columns: list[str]       # variables originales + auxiliares + "bj"
+    cj: list[FracM]          # C_j originales del objetivo (uno por columna; "" en bj)
+    rows: list[Row]          # SOLO filas de restricciones
+    zj: list[FracM]          # Z_j = Σ(CB_i · a_ij); bj = valor actual de Z
+    cj_zj: list[FracM]       # C_j − Z_j; "" en bj
 
-    def pivot(self, basic_row: str, col: str) -> Tableau   # inmutable: devuelve nuevo
-    def z_row(self) -> Row
-    def most_negative_z_entry(self) -> str | None          # columna que entra (orden FracM)
-    def is_optimal(self) -> bool                           # fila z sin negativos
+    def pivot(self, leaving: str, entering: str) -> Tableau
+        # Gauss-Jordan sobre rows. Actualiza V_B y C_B del leaving row.
+        # NO recalcula zj ni cj_zj. Inmutable: devuelve nuevo.
+    def evaluate(self) -> Tableau                               # recalcula zj y cj_zj
+    def entering_variable(self) -> str | None
+        # max: columna con C_j−Z_j más positivo (> 0; orden FracM)
+        # min: columna con C_j−Z_j más negativo (< 0; orden FracM)
+        # None → óptimo
+    def is_optimal(self) -> bool
+        # max: todos C_j−Z_j ≤ 0; min: todos C_j−Z_j ≥ 0
     def min_ratio(self, col: str) -> tuple[str | None, list[str]]
         # (fila saliente | None si columna sin positivos, razones como strings)
 ```
 
 Convenciones:
-- **Fila z almacena `z_j − c_j`; entra el más negativo; `rhs` de la fila z = valor actual de z.**
+- **Formato tabular $C_j - Z_j$:** el tableau NO tiene fila z unificada. $Z_j$ y $C_j - Z_j$ se calculan como datos derivados de $C_B$ y las filas de restricciones mediante `evaluate()`.
+- **El motor trabaja en el sentido original** (max o min); no normaliza min→max. El criterio de entrada y optimalidad depende de `sense`.
 - Nombres de auxiliares: `s_i` holgura (de `≤`), `e_i` exceso (de `≥`), `a_i` artificial (de `≥` y `=`).
-- `pivot` devuelve un Tableau nuevo → los snapshots para el stepper salen gratis.
+- `pivot` + `evaluate` devuelven Tableaux nuevos → los snapshots para el stepper salen gratis.
 - **Nunca se eliminan columnas (artificiales incluidas):** B⁻¹ final vive en las columnas de la identidad inicial; la sensibilidad la necesita.
 
 ### `solver.py`
@@ -106,12 +118,10 @@ def solve(initial: Tableau, max_iter: int = 200) -> EngineResult
 ```
 
 Reglas del bucle (FIJAS, idénticas para todo método):
-1. entra = `most_negative_z_entry` (orden lexicográfico de FracM → en Gran M prioriza automáticamente los términos con M).
-2. sin negativos → `optimal`.
+1. entra = `entering_variable()` — max: $C_j - Z_j$ más positivo; min: más negativo (orden lexicográfico de FracM → en Gran M los términos con M dominan automáticamente).
+2. sin candidato → `optimal`.
 3. razón mínima; columna sin positivos → `unbounded` (se registra la iteración).
-4. pivote → snapshot → siguiente. `max_iter` excedido → RuntimeError (bug de implementación, no un caso del método).
-
-**El motor siempre maximiza.** La normalización max/min vive en los constructores.
+4. `pivot(leaving, entering)` → `evaluate()` → snapshot → siguiente. `max_iter` excedido → RuntimeError (bug de implementación, no un caso del método).
 
 ## 3. Métodos (`methods/`) — protocolo uniforme
 
@@ -152,25 +162,26 @@ class MethodResult(BaseModel):
   - toda restricción debe ser `<=` ("El método Simplex solo admite restricciones ≤ … usa Gran M")
   - `rhs >= 0` en todas (forma estándar; RHS negativo → sugerir Gran M)
   - ≤ 8 variables / ≤ 8 restricciones
-  - normaliza min→max (niega c, lo registra internamente para revertir al reportar)
-  - agrega `s_1..s_m`; base inicial = holguras; fila z desde el objetivo
+  - $C_j$ = coeficientes originales del objetivo; holguras con $C_j = 0$
+  - agrega `s_1..s_m`; base inicial = holguras ($C_B = 0$); llama `evaluate()` al final
 - **interpret**:
   - `unbounded` → frase + iteración donde se detectó
   - degeneración (empate en razón mínima o básica en 0) → `degenerate_pivot` con frase
-  - óptimos alternativos → no básica con costo reducido 0 en la tabla final → `alternative_optima`
-  - solución: variables originales desde la base final (0 si no básicas), z en el sentido original
+  - óptimos alternativos → no básica con $C_j - Z_j = 0$ en la tabla final → `alternative_optima`
+  - solución: variables originales desde la base final (0 si no básicas), $Z$ = `zj[bj]` directo
 
 ### `methods/big_m.py`
 
 - **build**:
-  - normaliza min→max
   - `rhs < 0` → multiplica la fila por -1 (volteando `op`) y agrega `normalized_constraint` al resultado
-  - `<=` → holgura `s_i`; `>=` → exceso `e_i` (coeficiente -1) + **artificial `a_i` con costo -M**; `=`` → **artificial `a_i` con costo -M**
-  - fila z con FracM → los `-M` quedan visibles en las tablas
+  - `<=` → holgura `s_i` ($C_j = 0$); `>=` → exceso `e_i` (coef. -1, $C_j = 0$) + **artificial `a_i`** ($C_j = -M$ si max, $+M$ si min)
+  - `=` → **artificial `a_i`** ($C_j = -M$ si max, $+M$ si min)
+  - `cj` con FracM → los valores con M quedan visibles en las tablas
+  - base inicial: holguras ($C_B = 0$) y artificiales ($C_B = -M$ o $+M$); llama `evaluate()` al final
 - **interpret**: todo lo de simplex **más**:
   - artificial en base final con valor > 0 → `infeasible` ("el problema no tiene solución factible: la artificial a_i quedó en la base")
   - artificial en base final en 0 → nota degenerada (no es infactible)
-  - excluye artificiales/holguras de `solution`
+  - excluye artificiales/holguras/excesos de `solution`
 
 ## 4. Sensibilidad (`sensitivity.py`)
 
@@ -179,7 +190,7 @@ def analyze(problem: Problem, method: Method) -> SensitivityReport
 ```
 
 - La API recibe `{method, problem}` (NO el tableau) → re-resuelve internamente (exacto y barato), sin estado ni round-trip de strings.
-- Usa la tabla final: precios sombra desde la fila z (columnas de holgura/exceso/artificial), B⁻¹ desde las columnas de la identidad.
+- Usa la tabla final: precios sombra desde $Z_j$ (columnas de holgura/exceso/artificial), B⁻¹ desde las columnas de la identidad.
 
 ```python
 class ShadowPrice(BaseModel):     # por restriccion
@@ -269,12 +280,15 @@ Response (fragmento):
   "iterations": [
     {"number": 0, "entering": null, "leaving": null, "pivot": null, "ratios": [], "ties": [],
      "tableau": {
-       "columns": ["pandesal", "hojaldre", "s1", "e1", "a1", "rhs"],
+       "sense": "max",
+       "columns": ["pandesal", "hojaldre", "s1", "e1", "a1", "bj"],
+       "cj": ["40", "30", "0", "0", "-M", ""],
        "rows": [
-         {"basic": "z",  "cells": ["-40", "-M-30", "0", "M", "0", "-5M"]},
-         {"basic": "s1", "cells": ["1", "1", "1", "0", "0", "40"]},
-         {"basic": "a1", "cells": ["0", "1", "0", "-1", "1", "5"]}
-       ]}},
+         {"basic": "s1", "cb": "0", "cells": ["1", "1", "1", "0", "0", "40"]},
+         {"basic": "a1", "cb": "-M", "cells": ["0", "1", "0", "-1", "1", "5"]}
+       ],
+       "zj": ["0", "-M", "0", "M", "-M", "-5M"],
+       "cj_zj": ["40", "M+30", "0", "-M", "0", ""]}},
     {"number": 1, "entering": "hojaldre", "leaving": "a1", "pivot": "1",
      "ratios": ["40", "5"], "ties": [],
      "tableau": { "...": "..." }}
@@ -284,7 +298,7 @@ Response (fragmento):
 }
 ```
 
-Nota: en la iteración 0 la fila z de Gran M muestra `-M-30` en hojaldre — el orden lexicográfico hace que el motor lo elija antes que `-40`; es exactamente la regla del Gran M.
+Nota: en la iteración 0 la tabla de Gran M muestra $C_j - Z_j = M+30$ en hojaldre — el orden lexicográfico de FracM hace que el motor lo elija antes que $40$; es exactamente la regla del Gran M.
 
 ## 6. Errores / validación
 

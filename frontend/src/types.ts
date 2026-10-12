@@ -13,8 +13,20 @@ export interface Constraint { name: string; coefficients: string[]; op: Op; rhs:
 export interface Objective { sense: Sense; coefficients: string[] }
 export interface Problem { name: string; variables: Variable[]; objective: Objective; constraints: Constraint[] }
 
-export interface TableauRow { basic: string; cells: string[] }
-export interface TableauData { columns: string[]; rows: TableauRow[] }
+export interface TableauRow {
+  basic: string;
+  cb: string;
+  cells: string[];
+}
+
+export interface TableauData {
+  sense: Sense;
+  columns: string[];
+  cj: string[];
+  rows: TableauRow[];
+  zj: string[];
+  cj_zj: string[];
+}
 
 export interface Iteration {
   number: number;

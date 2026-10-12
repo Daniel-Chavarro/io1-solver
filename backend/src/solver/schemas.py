@@ -96,12 +96,17 @@ class ComparisonRequest(BaseModel):
 
 class TableauRow(BaseModel):
     basic: str
+    cb: str
     cells: list[str]
 
 
 class TableauOut(BaseModel):
+    sense: Sense
     columns: list[str]
+    cj: list[str]
     rows: list[TableauRow]
+    zj: list[str]
+    cj_zj: list[str]
 
 
 class IterationOut(BaseModel):

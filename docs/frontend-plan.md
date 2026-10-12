@@ -21,11 +21,11 @@ Estado del código al planear (`frontend/src/`): existen `types.ts`
 | F4 | Acabado visual | Diseño conservador con identidad: tokens Tailwind, tablas legibles, resaltado de pivote | Minimal sin estilo propio |
 | F5 | Corte por entrega | Entrega 2: Simplex completo. Final: Gran M + sensibilidad + comparación | Adelantar sensibilidad a la Entrega 2 |
 | F6 | Flujo de pantallas | Página única: formulario colapsable arriba, resultados abajo | Dos vistas con navegación |
-| F7 | Anatomía de cada iteración | Franja de metadatos + tableau resaltado: columna entrante y fila saliente teñidas, celda pivote marcada, fila z diferenciada, columna de razón mínima | Tabla simple con pie de texto |
+| F7 | Anatomía de cada iteración | Franja de metadatos + tableau clásico: fila $C_j$ superior, columnas fijas $V_B$ y $C_B$ a la izquierda y $b_j$ a la derecha, restricciones en el cuerpo, filas $Z_j$ y $C_j - Z_j$ al pie, columna entrante y fila saliente teñidas, celda pivote marcada | Tabla simple con pie de texto o fila z unificada |
 | F8 | Casos especiales | Panel persistente de avisos + badge inline en la iteración donde ocurren | Toasts temporales |
 | F9 | Sensibilidad y comparación | Botones en la zona de resultados, sobre el problema cargado | Pestañas independientes con captura propia |
 | F10 | Modo demo (sustentación) | Sin modo especial: buenos defaults (dropdown de ejemplos, formulario compacto, contraste alto) | Modo presentación aparte |
-| F11 | Ancho del tableau | Scroll horizontal con columnas fijas "Básica" y "RHS"; componente agnóstico de dimensiones (renderiza tablas mucho mayores que 8×8) | Encabezados abreviados; transponer la tabla |
+| F11 | Ancho del tableau | Scroll horizontal con columnas fijas $V_B$ y $C_B$ a la izquierda y $b_j$ a la derecha; componente agnóstico de dimensiones (renderiza tablas mucho mayores que 8×8) | Encabezados abreviados; transponer la tabla |
 | F12 | Sección de sensibilidad | Cuatro bloques temáticos con frases de interpretación destacadas | Una sola tabla ancha |
 | F13 | Sección de comparación | Tabla de métricas + banner de veredicto + indicador "mismo z" | Dos tarjetas sin comparativa |
 | F14 | Selector de método | Global en el formulario (Simplex \| Gran M); lo usan Resolver y Sensibilidad; Comparar siempre corre ambos | Recordar el método de cada resolución |
@@ -153,70 +153,86 @@ caso `bakery-real`):
   <text x="872" y="531" fill="var(--fg)">▶</text>
   <text x="900" y="531" fill="var(--accent)">Ver todas</text>
 
-  <!-- tableau -->
-  <rect x="140" y="556" width="110" height="150" fill="var(--accent)" fill-opacity="0.10"/>
-  <rect x="40" y="626" width="820" height="40" fill="var(--accent)" fill-opacity="0.10"/>
-  <rect x="140" y="626" width="110" height="40" fill="none" stroke="var(--accent)" stroke-width="2"/>
-  <line x1="40" y1="556" x2="860" y2="556" stroke="var(--border)"/>
+  <!-- tableau clasico C_j - Z_j -->
+  <rect x="220" y="556" width="100" height="200" fill="var(--accent)" fill-opacity="0.10"/>
+  <rect x="40" y="656" width="820" height="36" fill="var(--accent)" fill-opacity="0.10"/>
+  <rect x="220" y="656" width="100" height="36" fill="none" stroke="var(--accent)" stroke-width="2"/>
+  <!-- C_j top row -->
+  <line x1="160" y1="556" x2="760" y2="556" stroke="var(--border)"/>
+  <text x="180" y="574" font-size="11" fill="var(--muted)">C_j</text>
+  <text x="270" y="574" text-anchor="middle" font-size="11" fill="var(--muted)">40</text>
+  <text x="370" y="574" text-anchor="middle" font-size="11" fill="var(--muted)">30</text>
+  <text x="460" y="574" text-anchor="middle" font-size="11" fill="var(--muted)">0</text>
+  <text x="540" y="574" text-anchor="middle" font-size="11" fill="var(--muted)">0</text>
+  <text x="620" y="574" text-anchor="middle" font-size="11" fill="var(--muted)">-M</text>
+  <text x="710" y="574" text-anchor="middle" font-size="11" fill="var(--muted)">—</text>
+  <!-- header line -->
   <line x1="40" y1="586" x2="860" y2="586" stroke="var(--border)"/>
-  <line x1="40" y1="626" x2="860" y2="626" stroke="var(--border)"/>
-  <line x1="40" y1="666" x2="860" y2="666" stroke="var(--border)"/>
-  <line x1="40" y1="706" x2="860" y2="706" stroke="var(--border)"/>
-  <line x1="40" y1="556" x2="40" y2="706" stroke="var(--border)"/>
-  <line x1="140" y1="556" x2="140" y2="706" stroke="var(--border)"/>
-  <line x1="250" y1="556" x2="250" y2="706" stroke="var(--border)"/>
-  <line x1="360" y1="556" x2="360" y2="706" stroke="var(--border)"/>
-  <line x1="450" y1="556" x2="450" y2="706" stroke="var(--border)"/>
-  <line x1="540" y1="556" x2="540" y2="706" stroke="var(--border)"/>
-  <line x1="630" y1="556" x2="630" y2="706" stroke="var(--border)"/>
-  <line x1="740" y1="556" x2="740" y2="706" stroke="var(--border)"/>
-  <line x1="860" y1="556" x2="860" y2="706" stroke="var(--border)"/>
-  <text x="62" y="576" font-size="12" fill="var(--muted)">Básica</text>
-  <text x="195" y="576" text-anchor="middle" font-size="12" fill="var(--muted)">pandesal</text>
-  <text x="305" y="576" text-anchor="middle" font-size="12" fill="var(--muted)">hojaldre</text>
-  <text x="405" y="576" text-anchor="middle" font-size="12" fill="var(--muted)">s1</text>
-  <text x="495" y="576" text-anchor="middle" font-size="12" fill="var(--muted)">e1</text>
-  <text x="585" y="576" text-anchor="middle" font-size="12" fill="var(--muted)">a1</text>
-  <text x="685" y="576" text-anchor="middle" font-size="12" fill="var(--muted)">RHS</text>
-  <text x="800" y="576" text-anchor="middle" font-size="12" fill="var(--muted)">razón mín</text>
-  <text x="62" y="611" font-weight="700" fill="var(--fg)">z</text>
-  <text x="195" y="611" text-anchor="middle" fill="var(--fg)">0</text>
-  <text x="305" y="611" text-anchor="middle" fill="var(--fg)">0</text>
-  <text x="405" y="611" text-anchor="middle" fill="var(--fg)">40</text>
-  <text x="495" y="611" text-anchor="middle" fill="var(--fg)">10</text>
-  <text x="585" y="611" text-anchor="middle" fill="var(--fg)">M-10</text>
-  <text x="685" y="611" text-anchor="middle" font-weight="700" fill="var(--fg)">1550</text>
-  <text x="800" y="611" text-anchor="middle" fill="var(--muted)">—</text>
-  <text x="62" y="651" fill="var(--fg)">pandesal</text>
-  <text x="195" y="651" text-anchor="middle" fill="var(--fg)">1</text>
-  <text x="305" y="651" text-anchor="middle" fill="var(--fg)">0</text>
-  <text x="405" y="651" text-anchor="middle" fill="var(--fg)">1</text>
-  <text x="495" y="651" text-anchor="middle" fill="var(--fg)">1</text>
-  <text x="585" y="651" text-anchor="middle" fill="var(--fg)">-1</text>
-  <text x="685" y="651" text-anchor="middle" fill="var(--fg)">35</text>
-  <text x="800" y="651" text-anchor="middle" fill="var(--fg)">35</text>
-  <text x="62" y="691" fill="var(--fg)">hojaldre</text>
-  <text x="195" y="691" text-anchor="middle" fill="var(--fg)">0</text>
-  <text x="305" y="691" text-anchor="middle" fill="var(--fg)">1</text>
-  <text x="405" y="691" text-anchor="middle" fill="var(--fg)">0</text>
-  <text x="495" y="691" text-anchor="middle" fill="var(--fg)">-1</text>
-  <text x="585" y="691" text-anchor="middle" fill="var(--fg)">1</text>
-  <text x="685" y="691" text-anchor="middle" fill="var(--fg)">5</text>
-  <text x="800" y="691" text-anchor="middle" fill="var(--fg)">5</text>
-  <text x="40" y="728" font-size="11" fill="var(--muted)">Celdas en forma canónica (fracciones, -M-30): el frontend solo muestra, nunca calcula.</text>
+  <text x="65" y="606" font-size="12" font-weight="700" fill="var(--muted)">V_B</text>
+  <text x="125" y="606" font-size="12" font-weight="700" fill="var(--muted)">C_B</text>
+  <text x="270" y="606" text-anchor="middle" font-size="12" fill="var(--muted)">pandesal</text>
+  <text x="370" y="606" text-anchor="middle" font-size="12" fill="var(--muted)">hojaldre</text>
+  <text x="460" y="606" text-anchor="middle" font-size="12" fill="var(--muted)">s1</text>
+  <text x="540" y="606" text-anchor="middle" font-size="12" fill="var(--muted)">e1</text>
+  <text x="620" y="606" text-anchor="middle" font-size="12" fill="var(--muted)">a1</text>
+  <text x="710" y="606" text-anchor="middle" font-size="12" font-weight="700" fill="var(--muted)">b_j</text>
+  <text x="810" y="606" text-anchor="middle" font-size="12" fill="var(--muted)">razón mín</text>
+  <line x1="40" y1="620" x2="860" y2="620" stroke="var(--border)"/>
+  <!-- constraint row 1 -->
+  <text x="65" y="642" fill="var(--fg)">s1</text>
+  <text x="125" y="642" fill="var(--fg)">0</text>
+  <text x="270" y="642" text-anchor="middle" fill="var(--fg)">1</text>
+  <text x="370" y="642" text-anchor="middle" fill="var(--fg)">1</text>
+  <text x="460" y="642" text-anchor="middle" fill="var(--fg)">1</text>
+  <text x="540" y="642" text-anchor="middle" fill="var(--fg)">0</text>
+  <text x="620" y="642" text-anchor="middle" fill="var(--fg)">0</text>
+  <text x="710" y="642" text-anchor="middle" fill="var(--fg)">40</text>
+  <text x="810" y="642" text-anchor="middle" fill="var(--fg)">40</text>
+  <line x1="40" y1="656" x2="860" y2="656" stroke="var(--border)"/>
+  <!-- constraint row 2 (leaving row) -->
+  <text x="65" y="678" fill="var(--fg)">a1</text>
+  <text x="125" y="678" fill="var(--fg)">-M</text>
+  <text x="270" y="678" text-anchor="middle" fill="var(--fg)">0</text>
+  <text x="370" y="678" text-anchor="middle" fill="var(--fg)">1</text>
+  <text x="460" y="678" text-anchor="middle" fill="var(--fg)">0</text>
+  <text x="540" y="678" text-anchor="middle" fill="var(--fg)">-1</text>
+  <text x="620" y="678" text-anchor="middle" fill="var(--fg)">1</text>
+  <text x="710" y="678" text-anchor="middle" fill="var(--fg)">5</text>
+  <text x="810" y="678" text-anchor="middle" font-weight="700" fill="var(--accent)">5</text>
+  <line x1="40" y1="692" x2="860" y2="692" stroke="var(--border)"/>
+  <!-- Z_j row -->
+  <text x="125" y="712" font-weight="700" fill="var(--fg)">Z_j</text>
+  <text x="270" y="712" text-anchor="middle" fill="var(--fg)">0</text>
+  <text x="370" y="712" text-anchor="middle" fill="var(--fg)">-M</text>
+  <text x="460" y="712" text-anchor="middle" fill="var(--fg)">0</text>
+  <text x="540" y="712" text-anchor="middle" fill="var(--fg)">M</text>
+  <text x="620" y="712" text-anchor="middle" fill="var(--fg)">-M</text>
+  <text x="710" y="712" text-anchor="middle" font-weight="700" fill="var(--fg)">-5M</text>
+  <text x="810" y="712" text-anchor="middle" fill="var(--muted)">—</text>
+  <line x1="40" y1="724" x2="860" y2="724" stroke="var(--border)"/>
+  <!-- C_j - Z_j row -->
+  <text x="105" y="744" font-weight="700" fill="var(--fg)">C_j−Z_j</text>
+  <text x="270" y="744" text-anchor="middle" fill="var(--fg)">40</text>
+  <text x="370" y="744" text-anchor="middle" font-weight="700" fill="var(--accent)">M+30</text>
+  <text x="460" y="744" text-anchor="middle" fill="var(--fg)">0</text>
+  <text x="540" y="744" text-anchor="middle" fill="var(--fg)">-M</text>
+  <text x="620" y="744" text-anchor="middle" fill="var(--fg)">0</text>
+  <text x="710" y="744" text-anchor="middle" fill="var(--muted)">—</text>
+  <text x="810" y="744" text-anchor="middle" fill="var(--muted)">—</text>
+  <line x1="40" y1="756" x2="860" y2="756" stroke="var(--border)"/>
+  <text x="40" y="772" font-size="11" fill="var(--muted)">Formato clásico C_j − Z_j: el frontend solo muestra strings exactos recibidos de la API, nunca calcula.</text>
 </svg>
 ```
 
 Notas del wireframe:
 
-- Fila z arriba, diferenciada en negrita; RHS de la fila z = valor de z.
-- Columna entrante (`pandesal`) y fila saliente (la que era `s1`) teñidas;
-  celda pivote con borde de acento. La columna "razón mín" aparece solo
-  durante el paso con razones.
-- La franja de metadatos encima de la tabla es la fuente de verdad de
-  "entra / sale / pivote" (F7); la tabla solo resalta.
-- En Gran M las celdas muestran `-M-30`, `M-10`, etc., tal cual.
-
+- Fila $C_j$ arriba, sobre los nombres de variables; fija e independiente del paso.
+- Columnas $V_B$ y $C_B$ a la izquierda (`position: sticky`), y $b_j$ a la derecha (`position: sticky`).
+- Restricciones en el cuerpo: cada fila muestra su variable básica ($V_B$) y costo ($C_B$).
+- Filas inferiores $Z_j$ y $C_j - Z_j$: $Z_j$ en la columna $b_j$ muestra el valor actual de $Z$; $C_j - Z_j$ en $b_j$ queda vacío.
+- Columna entrante (`hojaldre`, $C_j - Z_j = M+30$ más positivo en max) y fila saliente (`a1`, menor razón 5) teñidas; celda pivote con borde de acento.
+- La columna "razón mín" aparece a la derecha de $b_j$ durante los pasos con razones calculadas.
+- En Gran M las celdas muestran `-M-30`, `M+30`, `M-10`, etc., tal cual desde la API.
 ## 5. Componentes
 
 | Archivo | Responsabilidad | Estado |
@@ -254,16 +270,18 @@ Si el estado compartido crece, un reducer; no antes.
 
 ### 6.2 `TableauTable`
 
-- Props: `Tableau` + `Iteration` (entering, leaving, pivot, ratios, ties).
+- Props: `tableau: TableauData`, `iteration: Iteration`.
 - Dimensiones agnósticas: R×C cualquiera; entrada al contrato hasta 8×8,
   pero renderiza tablas mucho mayores sin cambios (F11 y supuesto de §1).
-- Scroll horizontal; columna `Básica` fija a la izquierda y `RHS` fija a la
-  derecha (`position: sticky`).
+- Disposición clásica:
+  - Fila superior $C_j$: muestra los coeficientes del objetivo sobre las columnas de variables.
+  - Encabezado: $V_B$ y $C_B$ a la izquierda, nombres de variables al centro, $b_j$ a la derecha, y opcionalmente "razón mín".
+  - Cuerpo: una fila por restricción (`rows`), mostrando `basic` ($V_B$), `cb` ($C_B$), y `cells` (incluyendo $b_j$).
+  - Pie: fila $Z_j$ (`zj`), con el valor actual de $Z$ en la celda $b_j$; fila $C_j - Z_j$ (`cj_zj`), con celda vacía en $b_j$.
+- Scroll horizontal; columnas $V_B$ y $C_B$ fijas a la izquierda y $b_j$ fija a la derecha (`position: sticky`).
 - Resaltado: columna entrante y fila saliente teñidas, celda pivote con
-  borde, fila z en negrita, columna "razón mín" (solo si `ratios` no está
-  vacía), badge en filas con empate (`ties`).
-- Celdas: strings canónicos tal cual (`"3/4"`, `"-M-30"`).
-
+  borde, badge en filas con empate (`ties`), columna "razón mín" (solo si `ratios` no está vacía).
+- Celdas: strings canónicos tal cual (`"3/4"`, `"-M-30"`). El frontend nunca calcula ni parsea.
 ### 6.3 `Stepper` + `IterationStrip`
 
 - ◀ ▶ recorre `iterations` (0 = tabla inicial, sin entra/sale) y "ver

@@ -46,7 +46,9 @@ Procedimiento paso a paso que resuelve un problema (Simplex, Gran M).
 _Avoid_: algoritmo, librería, motor.
 
 **Tableau**:
-Tabla que el método transforma por pivoteos; su primera fila es la fila z.
+Tabla que el método transforma por pivoteos; contiene filas de
+restricciones con $V_B$ y $C_B$, los coeficientes originales $C_j$, y las
+filas derivadas $Z_j$ y $C_j - Z_j$.
 _Avoid_: matriz, tabla de datos, tabulador.
 
 **Iteración**:
@@ -55,8 +57,8 @@ y el elemento pivote. La iteración 0 es el tableau inicial.
 _Avoid_: paso, vuelta, ronda.
 
 **Variable que entra**:
-Variable no básica que se hace básica en la iteración (costo reducido más
-negativo de la fila z).
+Variable no básica que se hace básica en la iteración ($C_j - Z_j$ más
+positivo en max, más negativo en min).
 _Avoid_: entrante, variable entrante.
 
 **Variable que sale**:
@@ -72,6 +74,27 @@ _Avoid_: pivote (ambiguo con el proceso de pivoteo).
 Criterio de salida: menor razón entre RHS y coeficiente positivo de la
 columna que entra. Un empate produce degeneración.
 _Avoid_: razón mínima de factibilidad, test de la razón.
+
+**$C_j$ (coeficientes del objetivo)**:
+Coeficiente original de la función objetivo para cada variable; fijo
+durante todo el proceso (no cambia entre iteraciones).
+_Avoid_: costos originales, vector de costos.
+
+**$C_B$ (costo de la variable básica)**:
+Coeficiente del objetivo de la variable que ocupa cada fila de la base;
+se actualiza al pivotear.
+_Avoid_: costo básico.
+
+**$Z_j$**:
+Evaluación del objetivo por columna: $\sum C_{B_i} \cdot a_{ij}$. En la
+columna $b_j$, es el valor actual de $Z$.
+_Avoid_: fila z (ambiguo con la fila z unificada que no usamos).
+
+**$C_j - Z_j$**:
+Criterio de optimalidad por columna: diferencia entre el coeficiente
+original y la evaluación. Indica cuánto mejoraría el objetivo al
+introducir esa variable en la base.
+_Avoid_: costos netos, indicadores.
 
 **Holgura / Exceso / Artificial**:
 Variables auxiliares `s_i` (de `≤`), `e_i` (de `≥`) y `a_i` (de `≥` y `=`)
