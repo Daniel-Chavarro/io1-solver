@@ -28,10 +28,21 @@ class FracM:
         return FracM(-self.const, -self.m)
     
     def __mult__(self, other: "FracM") -> "FracM":
-        const =  
+        if self.m != 0 and other.m != 0:
+            raise ValueError("FracM multiplication: M*M is not allowed")
+        
+        const = self.const * other.const
+        m = self.const * other.m + self.m * other.const
+        
+        return FracM(const, m)
 
     def __lt__(self, other: "FracM") -> bool:
-        raise NotImplementedError("frac_m.FracM.__lt__")
+        if self.m != other.m:
+            return self.m < other.m
+        return self.const < other.const
     
     def __eq__(self, other: object) -> bool:
-        raise NotImplementedError("frac_m.FracM.__eq__")
+        if not isinstance(other, FracM):
+            return False
+        
+        return self.m == other.m and self.const == other.const
