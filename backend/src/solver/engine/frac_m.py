@@ -53,7 +53,21 @@ class FracM:
     def __str__(self) -> str:
         parts = []
         if self.m != 0:
-            parts.append(f"{self.m}M" if self.m != 1 else "M")
-        if self.const != 0 or not parts:
-            parts.append(str(self.const))
-        return "+".join(parts)
+            if self.m == 1:
+                parts.append("M")
+            elif self.m == -1:
+                parts.append("-M")
+            else:
+                parts.append(f"{self.m}M")
+        
+        if self.const != 0:
+            if self.const > 0 and parts:
+                parts.append(f"+{self.const}")
+            else:
+                parts.append(str(self.const))
+        
+        if not parts:
+            return "0"
+        
+        return "".join(parts)
+    
