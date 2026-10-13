@@ -49,3 +49,11 @@ class FracM:
             return False
         
         return self.m == other.m and self.const == other.const
+    
+    def __str__(self) -> str:
+        parts = []
+        if self.m != 0:
+            parts.append(f"{self.m}M" if self.m != 1 else "M")
+        if self.const != 0 or not parts:
+            parts.append(str(self.const))
+        return "+".join(parts)
