@@ -44,6 +44,8 @@ class Tableau:
         if pivot_value == 0:
             raise ValueError(f"Pivot value is zero for leaving variable {leaving} and entering variable {entering}")
         
+        new_rows = []
+        
         for row in self.rows:
             if row.basic == leaving:
                 # Update the pivot row
@@ -59,9 +61,16 @@ class Tableau:
                 new_row = Row(basic=row.basic, cb=row.cb, cells=new_cells)
             
             # Replace the old row with the new row in the tableau
-            self.rows[self.rows.index(row)] = new_row
+            new_rows.append(new_row)
         
-        return self
+        return Tableau(
+            sense=self.sense,
+            columns=self.columns,
+            cj=self.cj,
+            rows=new_rows,
+            zj=self.zj,  # Will be recalculated in evaluate()
+            cj_zj=self.cj_zj,  # Will be recalculated in evaluate()
+        )
     
     def evaluate(self) -> "Tableau":
         # Recalculate Z_j and C_j - Z_j for all columns
