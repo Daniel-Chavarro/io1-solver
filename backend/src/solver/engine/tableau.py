@@ -87,15 +87,44 @@ class Tableau:
     
     
     def entering_variable(self) -> str | None:
-        # max: columna con C_j−Z_j más positivo (> 0; orden FracM)
-        # min: columna con C_j−Z_j más negativo (< 0; orden FracM)
-        # None → óptimo
-        raise NotImplementedError("entering_variable() not implemented yet")
-    
+        # max: column with the largest positive C_j - Z_j; min: column with the smallest negative C_j - Z_j
+        # min: column with the smallest negative C_j - Z_j
+        # None → finished (optimal) or unbounded (no positive ratios)
+        
+        if self.sense == "max":
+            candidates = [(j, cj_zj) for j, cj_zj in enumerate(self.cj_zj) if cj_zj > FracM(Fraction(0), Fraction(0))]
+            if not candidates:
+                return None
+            entering_index = max(candidates, key=lambda x: x[1])[0]
+            return self.columns[entering_index]
+        else:
+            candidates = [(j, cj_zj) for j, cj_zj in enumerate(self.cj_zj) if cj_zj < FracM(Fraction(0), Fraction(0))]
+            if not candidates:
+                return None
+            entering_index = min(candidates, key=lambda x: x[1])[0]
+            return self.columns[entering_index]
+
+
     def is_optimal(self) -> bool:
-        # max: todos C_j−Z_j ≤ 0; min: todos C_j−Z_j ≥ 0
-        raise NotImplementedError("is_optimal() not implemented yet")
+        # max: all C_j−Z_j ≤ 0; min: all C_j−Z_j ≥ 0
+        if self.sense == "max":
+            return all(cj_zj <= FracM(Fraction(0), Fraction(0)) for cj_zj in self.cj_zj)
+        else:
+            return all(cj_zj >= FracM(Fraction(0), Fraction(0)) for cj_zj in self.cj_zj)
     
     def min_ratio(self, col: str) -> tuple[str | None, list[str]]:
-        # (fila saliente | None si columna sin positivos, razones como strings)
-        raise NotImplementedError("min_ratio() not implemented yet")
+        # (entering row | None if column has no positives, ratios as strings)
+        
+        col_index = self.columns.index(col)
+        ratios: list[tuple[Fraction, str]] = []
+        
+        for row in self.rows:
+            if row.cells[col_index] > 0:
+                ratio = row.cells[-1] / row.cells[col_index]
+                ratios.append((ratio, row.basic))    
+        
+        if not ratios:
+            return (None, [])
+        
+        min_ratio = min(ratios, key=lambda x: x[0])
+        return (min_ratio[1], [str(r[0]) for r in ratios])
