@@ -8,6 +8,7 @@ entering column for Big-M tableaus without knowing Big-M exists.
 from dataclasses import dataclass
 from fractions import Fraction
 from functools import total_ordering
+from decimal import Decimal
 
 
 @dataclass(frozen=True)
@@ -15,6 +16,12 @@ from functools import total_ordering
 class FracM:
     const: Fraction
     m: Fraction = Fraction(0)
+    
+    @classmethod
+    def parse_decimal(cls, decimal_str: str) -> "FracM":
+        """Parse a decimal string into a FracM, preserving exactness."""
+        decimal_value = Decimal(decimal_str)
+        return cls(Fraction(decimal_value))
     
     def __add__(self, other: "FracM") -> "FracM":
         const = self.const + other.const
