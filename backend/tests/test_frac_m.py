@@ -119,29 +119,29 @@ class TestFracMFormattingAndParsing:
     """Verifies to_str() canonical strings and parse_decimal() per contracts section 0 and 2."""
 
     def test_to_str_pure_constants(self):
-        if not hasattr(FracM, "to_str"):
-            pytest.skip("FracM.to_str not yet implemented")
-        assert FracM(Fraction(0)).to_str() == "0"
-        assert FracM(Fraction(5)).to_str() == "5"
-        assert FracM(Fraction(-2)).to_str() == "-2"
-        assert FracM(Fraction(3, 4)).to_str() == "3/4"
-        assert FracM(Fraction(-7, 2)).to_str() == "-7/2"
+        if not hasattr(FracM, "__str__"):
+            pytest.skip("FracM.__str__ not yet implemented")
+        assert str(FracM(Fraction(0))) == "0"
+        assert str(FracM(Fraction(5))) == "5"
+        assert str(FracM(Fraction(-2))) == "-2"
+        assert str(FracM(Fraction(3, 4))) == "3/4"
+        assert str(FracM(Fraction(-7, 2))) == "-7/2"
 
     def test_to_str_pure_m(self):
-        if not hasattr(FracM, "to_str"):
-            pytest.skip("FracM.to_str not yet implemented")
-        assert FracM(Fraction(0), Fraction(1)).to_str() == "M"
-        assert FracM(Fraction(0), Fraction(-1)).to_str() == "-M"
-        assert FracM(Fraction(0), Fraction(2)).to_str() == "2M"
-        assert FracM(Fraction(0), Fraction(-3)).to_str() == "-3M"
+        if not hasattr(FracM, "__str__"):
+            pytest.skip("FracM.__str__ not yet implemented")
+        assert str(FracM(Fraction(0), Fraction(1))) == "M"
+        assert str(FracM(Fraction(0), Fraction(-1))) == "-M"
+        assert str(FracM(Fraction(0), Fraction(2))) == "2M"
+        assert str(FracM(Fraction(0), Fraction(-3))) == "-3M"
 
     def test_to_str_combined_forms(self):
-        if not hasattr(FracM, "to_str"):
-            pytest.skip("FracM.to_str not yet implemented")
-        assert FracM(Fraction(-30), Fraction(-1)).to_str() == "-M-30"
-        assert FracM(Fraction(1, 3), Fraction(2)).to_str() == "2M+1/3"
-        assert FracM(Fraction(-5), Fraction(1)).to_str() == "M-5"
-        assert FracM(Fraction(5), Fraction(1)).to_str() == "M+5"
+        if not hasattr(FracM, "__str__"):
+            pytest.skip("FracM.__str__ not yet implemented")
+        assert str(FracM(Fraction(-30), Fraction(-1))) == "-M-30"
+        assert str(FracM(Fraction(1, 3), Fraction(2))) == "2M+1/3"
+        assert str(FracM(Fraction(-5), Fraction(1))) == "M-5"
+        assert str(FracM(Fraction(5), Fraction(1))) == "M+5"
 
     def test_parse_decimal_exact(self):
         if not hasattr(FracM, "parse_decimal"):
