@@ -11,13 +11,14 @@ Conventions:
 from dataclasses import dataclass, field
 from typing import Literal
 from .frac_m import FracM
+from fractions import Fraction
 
 
 @dataclass()
 class Row:
     basic: str          # V_B: "x" | "s1" | "e1" | "a1"
     cb: FracM           # C_B: coeficiente del objetivo de la variable básica
-    cells: list[FracM]  # len == len(columns)
+    cells: list[Fraction]  # len == len(columns)
 @dataclass(frozen=True)
 class Tableau:
     sense: Literal["max", "min"]
@@ -28,13 +29,63 @@ class Tableau:
     cj_zj: list[FracM]       # C_j − Z_j; "" en bj
 
     def pivot(self, leaving: str, entering: str) -> "Tableau":
-        # Gauss-Jordan sobre rows. Actualiza V_B y C_B del leaving row.
-        # NO recalcula zj ni cj_zj. Inmutable: devuelve nuevo.
-        raise NotImplementedError("pivot() not implemented yet")
+        # Search for the pivot row corresponding to the leaving variable
+        pivot_row = next((r for r in self.rows if r.basic == leaving), None)
+        if pivot_row is None:
+            raise ValueError(f"Leaving variable {leaving} not found in tableau rows")
+        
+        # Search for the pivot column index corresponding to the entering variable
+        pivot_col_index = self.columns.index(entering)
+        if pivot_col_index < 0:
+            raise ValueError(f"Entering variable {entering} not found in tableau columns")
+        
+        # Check if the pivot value is zero to avoid division by zero
+        pivot_value = pivot_row.cells[pivot_col_index]
+        if pivot_value == 0:
+            raise ValueError(f"Pivot value is zero for leaving variable {leaving} and entering variable {entering}")
+        
+        for row in self.rows:
+            if row.basic == leaving:
+                # Update the pivot row
+                new_cells = [cell / pivot_value for cell in row.cells]
+                new_cb = self.cj[pivot_col_index]  # New C_B is the C_j of the entering variable
+                new_row = Row(basic=entering, cb=new_cb, cells=new_cells)
+            else:
+                # Update other rows
+                factor = row.cells[pivot_col_index] / pivot_value
+                new_cells = [
+                    cell - factor * pivot_row.cells[j] for j, cell in enumerate(row.cells)
+                ]
+                new_row = Row(basic=row.basic, cb=row.cb, cells=new_cells)
+            
+            # Replace the old row with the new row in the tableau
+            self.rows[self.rows.index(row)] = new_row
+        
+        return self
     
     def evaluate(self) -> "Tableau":
-        # recalcula zj y cj_zj
-        raise NotImplementedError("evaluate() not implemented yet")
+        # Recalculate Z_j and C_j - Z_j for all columns
+        new_zj: list[FracM] = []
+        new_cj_zj: list[FracM] = []
+        
+        for j, col in enumerate(self.columns):
+            zj_value: FracM = sum(
+                (row.cb * FracM(row.cells[j], Fraction(0)) for row in self.rows),
+                FracM(Fraction(0), Fraction(0)),
+            )
+            new_zj.append(zj_value)
+            new_cj_zj.append(self.cj[j] - zj_value)
+        
+        return Tableau(
+            sense=self.sense,
+            columns=self.columns,
+            cj=self.cj,
+            rows=self.rows,
+            zj=new_zj,
+            cj_zj=new_cj_zj,
+        )
+    
+    
     def entering_variable(self) -> str | None:
         # max: columna con C_j−Z_j más positivo (> 0; orden FracM)
         # min: columna con C_j−Z_j más negativo (< 0; orden FracM)
