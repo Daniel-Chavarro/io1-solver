@@ -1,36 +1,50 @@
-"""Tableau: rows of FracM cells with an always-first z row (contracts section 2).
+"""Tableau in the contractual C_j - Z_j format (contracts section 2).
 
 Conventions:
-- rows[0] is the z row; it stores z_j - c_j and its rhs cell is the current z.
-- Aux columns keep their identity columns forever (never dropped): the final
-  basis inverse lives there and sensitivity needs it.
-- pivot() returns a NEW Tableau (immutable) so iteration snapshots are free.
+- rows contains only constraint rows; there is no unified z row.
+- zj and cj-zj are derived values, recalculated by evaluate().
+- The tableau preserves the original and auxiliary columns, including
+    artificial columns, so the final basis inverse remains available for
+    sensitivity analysis.
+- pivot() and evaluate() return NEW Tableaux (immutable snapshots).
 """
 from dataclasses import dataclass, field
-
+from typing import Literal
 from .frac_m import FracM
 
 
-@dataclass
+@dataclass()
 class Row:
-    basic: str                      # "x1" | "s1" | "e1" | "a1" | "z"
-    cells: list[FracM] = field(default_factory=list)
-
-
-@dataclass
+    basic: str          # V_B: "x" | "s1" | "e1" | "a1"
+    cb: FracM           # C_B: coeficiente del objetivo de la variable básica
+    cells: list[FracM]  # len == len(columns)
+@dataclass(frozen=True)
 class Tableau:
-    columns: list[str] = field(default_factory=list)   # vars + aux + "rhs"
-    rows: list[Row] = field(default_factory=list)     # rows[0] = z row
+    sense: Literal["max", "min"]
+    columns: list[str]       # variables originales + auxiliares + "bj"
+    cj: list[FracM]          # C_j originales del objetivo (uno por columna; "" en bj)
+    rows: list[Row]          # SOLO filas de restricciones
+    zj: list[FracM]          # Z_j = Σ(CB_i · a_ij); bj = valor actual de Z
+    cj_zj: list[FracM]       # C_j − Z_j; "" en bj
 
-    # TODO(P3 - Niko784): implement per docs/contracts.md section 2
-    def pivot(self, basic_row: str, col: str) -> "Tableau":
-        raise NotImplementedError("tableau.pivot")
-
-    def most_negative_z_entry(self) -> str | None:
-        raise NotImplementedError("tableau.most_negative_z_entry")
-
+    def pivot(self, leaving: str, entering: str) -> "Tableau":
+        # Gauss-Jordan sobre rows. Actualiza V_B y C_B del leaving row.
+        # NO recalcula zj ni cj_zj. Inmutable: devuelve nuevo.
+        raise NotImplementedError("pivot() not implemented yet")
+    
+    def evaluate(self) -> "Tableau":
+        # recalcula zj y cj_zj
+        raise NotImplementedError("evaluate() not implemented yet")
+    def entering_variable(self) -> str | None:
+        # max: columna con C_j−Z_j más positivo (> 0; orden FracM)
+        # min: columna con C_j−Z_j más negativo (< 0; orden FracM)
+        # None → óptimo
+        raise NotImplementedError("entering_variable() not implemented yet")
+    
     def is_optimal(self) -> bool:
-        raise NotImplementedError("tableau.is_optimal")
-
+        # max: todos C_j−Z_j ≤ 0; min: todos C_j−Z_j ≥ 0
+        raise NotImplementedError("is_optimal() not implemented yet")
+    
     def min_ratio(self, col: str) -> tuple[str | None, list[str]]:
-        raise NotImplementedError("tableau.min_ratio")
+        # (fila saliente | None si columna sin positivos, razones como strings)
+        raise NotImplementedError("min_ratio() not implemented yet")
