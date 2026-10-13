@@ -64,7 +64,7 @@ class FracM:
 class Row:
     basic: str          # V_B: "x" | "s1" | "e1" | "a1"
     cb: FracM           # C_B: coeficiente del objetivo de la variable básica
-    cells: list[FracM]  # len == len(columns)
+    cells: list[Fraction]  # len == len(columns)
 
 class Tableau:
     sense: Literal["max", "min"]
