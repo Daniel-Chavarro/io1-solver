@@ -72,7 +72,7 @@ class Tableau:
     cj: list[FracM]          # C_j originales del objetivo (uno por columna; "" en bj)
     rows: list[Row]          # SOLO filas de restricciones
     zj: list[FracM]          # Z_j = Σ(CB_i · a_ij); bj = valor actual de Z
-    cj_zj: list[FracM]       # C_j − Z_j; "" en bj
+    cj_zj: list[FracM]       # C_j − Z_j;
 
     def pivot(self, leaving: str, entering: str) -> Tableau
         # Gauss-Jordan sobre rows. Actualiza V_B y C_B del leaving row.

@@ -26,7 +26,7 @@ class Tableau:
     cj: list[FracM]          # C_j originales del objetivo (uno por columna; "" en bj)
     rows: list[Row]          # SOLO filas de restricciones
     zj: list[FracM]          # Z_j = Σ(CB_i · a_ij); bj = valor actual de Z
-    cj_zj: list[FracM]       # C_j − Z_j; "" en bj
+    cj_zj: list[FracM]       # C_j − Z_j; sin incluir la columna de bj (última columna)
 
     def pivot(self, leaving: str, entering: str) -> "Tableau":
         # Search for the pivot row corresponding to the leaving variable
@@ -74,7 +74,8 @@ class Tableau:
                 FracM(Fraction(0), Fraction(0)),
             )
             new_zj.append(zj_value)
-            new_cj_zj.append(self.cj[j] - zj_value)
+            if col != "bj":
+                new_cj_zj.append(self.cj[j] - zj_value)
         
         return Tableau(
             sense=self.sense,
