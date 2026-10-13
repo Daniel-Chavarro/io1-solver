@@ -27,7 +27,7 @@ class FracM:
     def __neg__(self) -> "FracM":
         return FracM(-self.const, -self.m)
     
-    def __mult__(self, other: "FracM") -> "FracM":
+    def __mul__(self, other: "FracM") -> "FracM":
         if self.m != 0 and other.m != 0:
             raise ValueError("FracM multiplication: M*M is not allowed")
         
@@ -35,6 +35,7 @@ class FracM:
         m = self.const * other.m + self.m * other.const
         
         return FracM(const, m)
+    
 
     def __lt__(self, other: "FracM") -> bool:
         if self.m != other.m:
