@@ -7,9 +7,11 @@ entering column for Big-M tableaus without knowing Big-M exists.
 """
 from dataclasses import dataclass
 from fractions import Fraction
+from functools import total_ordering
 
 
 @dataclass(frozen=True)
+@total_ordering
 class FracM:
     const: Fraction
     m: Fraction = Fraction(0)
