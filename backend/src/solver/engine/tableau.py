@@ -95,8 +95,7 @@ class Tableau:
             cj_zj=new_cj_zj,
         )
     
-    
-    def entering_variable(self) -> str | None:
+    def get_entering_variable(self) -> str | None:
         # max: column with the largest positive C_j - Z_j; min: column with the smallest negative C_j - Z_j
         # min: column with the smallest negative C_j - Z_j
         # None → finished (optimal) or unbounded (no positive ratios)
@@ -114,7 +113,6 @@ class Tableau:
             entering_index = min(candidates, key=lambda x: x[1])[0]
             return self.columns[entering_index]
 
-
     def is_optimal(self) -> bool:
         # max: all C_j−Z_j ≤ 0; min: all C_j−Z_j ≥ 0
         if self.sense == "max":
@@ -122,19 +120,24 @@ class Tableau:
         else:
             return all(cj_zj >= FracM(Fraction(0), Fraction(0)) for cj_zj in self.cj_zj)
     
-    def min_ratio(self, col: str) -> tuple[str | None, list[str]]:
-        # (entering row | None if column has no positives, ratios as strings)
+    def get_leaving_variable(self, col: str) -> tuple[str | None, list[str], list[str]]:
+        # (entering row | None if column has no positives, ratios as strings, ties as strings)
         
         col_index = self.columns.index(col)
         ratios: list[tuple[Fraction, str]] = []
+        ties: list[str] = []
         
         for row in self.rows:
             if row.cells[col_index] > 0:
                 ratio = row.cells[-1] / row.cells[col_index]
-                ratios.append((ratio, row.basic))    
+                ratios.append((ratio, row.basic))
         
         if not ratios:
-            return (None, [])
-        
+            return (None, [], [])
+
         min_ratio = min(ratios, key=lambda x: x[0])
-        return (min_ratio[1], [str(r[0]) for r in ratios])
+        for ratio, basic in ratios:
+            if ratio == min_ratio[0]:
+                ties.append(basic)
+
+        return (min_ratio[1], [str(r[0]) for r in ratios], ties)
