@@ -141,3 +141,14 @@ class Tableau:
                 ties.append(basic)
 
         return (min_ratio[1], [str(r[0]) for r in ratios], ties)
+    
+    def get_pivot_value(self, leaving: str, entering: str) -> Fraction:
+        pivot_row = next((r for r in self.rows if r.basic == leaving), None)
+        if pivot_row is None:
+            raise ValueError(f"Leaving variable {leaving} not found in tableau rows")
+        
+        pivot_col_index = self.columns.index(entering)
+        if pivot_col_index < 0:
+            raise ValueError(f"Entering variable {entering} not found in tableau columns")
+        
+        return pivot_row.cells[pivot_col_index]
