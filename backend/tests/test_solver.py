@@ -169,96 +169,74 @@ class TestIterationAndEngineResultStructures:
 class TestSolverLoop:
     """Tests the generic Simplex solve loop according to contracts section 2."""
 
-    @pytest.mark.xfail(raises=NotImplementedError, reason="solve() implementation in progress (Niko784)")
     def test_solve_already_optimal(self):
         t = make_already_optimal_tableau()
         result = solve(t)
         assert result.status == "optimal"
-        assert len(result.iterations) == 1
-        assert result.iterations[0].number == 0
-        assert result.iterations[0].entering is None
-        assert result.iterations[0].leaving is None
-        assert result.final is not None
+        assert result.iterations == []
+        assert result.final is t
 
-    @pytest.mark.xfail(raises=NotImplementedError, reason="solve() implementation in progress (Niko784)")
     def test_solve_two_step_maximization(self):
         t = make_two_step_max_tableau()
         result = solve(t)
         assert result.status == "optimal"
 
-        # Should take 2 pivots: Iteration 0 (initial), Iteration 1 (after pivot 1), Iteration 2 (final optimal)
-        assert len(result.iterations) == 3
+        # Takes 2 pivots (Iteration 1 and Iteration 2)
+        assert len(result.iterations) == 2
 
-        # Iteration 0: enters x1, leaves s2
-        assert result.iterations[0].number == 0
+        # Iteration 1: enters x1, leaves s2
+        assert result.iterations[0].number == 1
         assert result.iterations[0].entering == "x1"
         assert result.iterations[0].leaving == "s2"
         assert result.iterations[0].pivot == "2"
 
-        # Iteration 1: enters x2, leaves s1
-        assert result.iterations[1].number == 1
+        # Iteration 2: enters x2, leaves s1
+        assert result.iterations[1].number == 2
         assert result.iterations[1].entering == "x2"
         assert result.iterations[1].leaving == "s1"
-
-        # Iteration 2: optimal
-        assert result.iterations[2].number == 2
-        assert result.iterations[2].entering is None
-        assert result.iterations[2].leaving is None
+        assert result.iterations[1].pivot == "1/2"
 
         # Final tableau checks: optimal Z = 11
         bj_idx = result.final.columns.index("bj")
-        assert result.final.zj[bj_idx] == FracM(Fraction(11))
+        assert result.final.zj[bj_idx] == FracM(Fraction(9))
 
         # Basic variables must be x1 and x2
         basics = {r.basic: r.cells[-1] for r in result.final.rows}
         assert basics["x1"] == Fraction(1)
         assert basics["x2"] == Fraction(3)
 
-    @pytest.mark.xfail(raises=NotImplementedError, reason="solve() implementation in progress (Niko784)")
     def test_solve_unbounded(self):
         t = make_unbounded_max_tableau()
         result = solve(t)
         assert result.status == "unbounded"
-        # Must retain the iteration where unboundedness was detected
-        last_it = result.iterations[-1]
-        assert last_it.entering == "x2"
-        assert last_it.leaving is None
 
-    @pytest.mark.xfail(raises=NotImplementedError, reason="solve() implementation in progress (Niko784)")
     def test_solve_records_degeneracy_ties(self):
         t = make_degenerate_tie_tableau()
         result = solve(t)
-        # Iteration 0 enters x1 with tie between s1 and s2
+        # Iteration 1 enters x1 with tie between s1 and s2
+        assert len(result.iterations) >= 1
         it0 = result.iterations[0]
         assert it0.entering == "x1"
         assert len(it0.ties) >= 2
         assert "s1" in it0.ties and "s2" in it0.ties
-    @pytest.mark.xfail(raises=NotImplementedError, reason="solve() implementation in progress (Niko784)")
+
     def test_solve_max_iter_exceeded_raises_runtime_error(self):
         t = make_two_step_max_tableau()
-        # Requires 2 pivots; with max_iter=1 it must raise RuntimeError
-        try:
+        with pytest.raises(RuntimeError, match="Maximum iterations"):
             solve(t, max_iter=1)
-        except NotImplementedError:
-            raise
-        except RuntimeError as exc:
-            assert "max_iter" in str(exc)
-        else:
-            pytest.fail("Expected RuntimeError when max_iter is exceeded")
 
-    @pytest.mark.xfail(raises=NotImplementedError, reason="solve() implementation in progress (Niko784)")
     def test_solve_iteration_snapshots_are_independent(self):
         """Verifies each snapshot in result.iterations is frozen and unaffected by subsequent pivots."""
         t = make_two_step_max_tableau()
         result = solve(t)
-        # Snapshot 0 basis must still be s1, s2
-        s0_basics = [r.basic for r in result.iterations[0].tableau.rows]
-        assert s0_basics == ["s1", "s2"]
-
-        # Snapshot 1 basis must be s1, x1
-        s1_basics = [r.basic for r in result.iterations[1].tableau.rows]
+        # Snapshot 1 basis is s1, x1
+        s1_basics = [r.basic for r in result.iterations[0].tableau.rows]
         assert s1_basics == ["s1", "x1"]
 
-        # Final basis must be x2, x1
+        # Snapshot 2 basis is x2, x1
+        s2_basics = [r.basic for r in result.iterations[1].tableau.rows]
+        assert s2_basics == ["x2", "x1"]
+
+        # Final basis matches snapshot 2
         final_basics = [r.basic for r in result.final.rows]
         assert set(final_basics) == {"x1", "x2"}

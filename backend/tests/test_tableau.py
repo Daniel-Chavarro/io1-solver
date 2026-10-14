@@ -153,13 +153,13 @@ class TestTableauEnteringVariable:
     def test_entering_variable_max_selects_most_positive(self):
         tableau = make_standard_tableau_max()
         # C_j - Z_j: x1 -> 3, x2 -> 2. Most positive is x1.
-        assert tableau.entering_variable() == "x1"
+        assert tableau.get_entering_variable() == "x1"
 
     def test_entering_variable_max_big_m_dominates(self):
         tableau = make_big_m_tableau_max()
         # pandesal C_j-Z_j is 40; hojaldre C_j-Z_j is M+30.
         # Since cj_zj does not contain bj and M dominates constants, hojaldre enters.
-        assert tableau.entering_variable() == "hojaldre"
+        assert tableau.get_entering_variable() == "hojaldre"
 
     def test_entering_variable_max_returns_none_when_optimal(self):
         columns = ["x1", "s1", "bj"]
@@ -174,7 +174,7 @@ class TestTableauEnteringVariable:
             zj=[FracM(Fraction(2)), FracM(Fraction(0)), FracM(Fraction(0))],
             cj_zj=[FracM(Fraction(-2)), FracM(Fraction(0))],
         )
-        assert t.entering_variable() is None
+        assert t.get_entering_variable() is None
 
     def test_entering_variable_never_picks_bj(self):
         """CRITICAL: cj_zj excludes bj, so entering_variable only chooses among variables."""
@@ -185,7 +185,7 @@ class TestTableauEnteringVariable:
         ]
         t = Tableau(sense="max", columns=columns, cj=cj, rows=rows, zj=[], cj_zj=[]).evaluate()
         assert len(t.cj_zj) == len(columns) - 1
-        assert t.entering_variable() != "bj"
+        assert t.get_entering_variable() != "bj"
 
     def test_entering_variable_min_selects_most_negative(self):
         columns = ["x1", "x2", "s1", "bj"]
@@ -193,7 +193,7 @@ class TestTableauEnteringVariable:
         rows = [Row(basic="s1", cb=FracM(Fraction(0)), cells=[Fraction(1), Fraction(1), Fraction(1), Fraction(10)])]
         t = Tableau(sense="min", columns=columns, cj=cj, rows=rows, zj=[], cj_zj=[]).evaluate()
         # In min: most negative C_j - Z_j enters: -5 (x1) vs -2 (x2).
-        assert t.entering_variable() == "x1"
+        assert t.get_entering_variable() == "x1"
 
     def test_entering_variable_min_returns_none_when_optimal(self):
         columns = ["x1", "s1", "bj"]
@@ -201,7 +201,17 @@ class TestTableauEnteringVariable:
         rows = [Row(basic="s1", cb=FracM(Fraction(0)), cells=[Fraction(1), Fraction(1), Fraction(5)])]
         t = Tableau(sense="min", columns=columns, cj=cj, rows=rows, zj=[], cj_zj=[]).evaluate()
         # In min, all C_j - Z_j >= 0 means optimal.
-        assert t.entering_variable() is None
+        assert t.get_entering_variable() is None
+
+    def test_entering_variable_tie_returns_first_candidate_without_ties_list(self):
+        """get_entering_variable only returns str | None (does not evaluate or return ties)."""
+        columns = ["x1", "x2", "s1", "bj"]
+        cj = [FracM(Fraction(5)), FracM(Fraction(5)), FracM(Fraction(0)), FracM(Fraction(0))]
+        rows = [Row(basic="s1", cb=FracM(Fraction(0)), cells=[Fraction(1), Fraction(1), Fraction(1), Fraction(10)])]
+        t = Tableau(sense="max", columns=columns, cj=cj, rows=rows, zj=[], cj_zj=[]).evaluate()
+        entering = t.get_entering_variable()
+        assert entering == "x1"
+        assert isinstance(entering, str)
 
 
 class TestTableauOptimality:
@@ -253,10 +263,24 @@ class TestTableauMinRatio:
         # Entering: x1
         # Row 1 (s1): b1=4, a_11=1 -> ratio = 4
         # Row 2 (s2): b2=5, a_21=2 -> ratio = 5/2 = 2.5
-        leaving, ratios = tableau.min_ratio("x1")
+        leaving, ratios, ties = tableau.get_leaving_variable("x1")
         assert leaving == "s2"
         assert "4" in ratios
         assert "5/2" in ratios
+        assert ties == ["s2"]
+
+    def test_leaving_variable_degenerate_ties(self):
+        """When multiple rows tie for minimum ratio, get_leaving_variable records them in ties."""
+        columns = ["x1", "s1", "s2", "bj"]
+        cj = [FracM(Fraction(4)), FracM(Fraction(0)), FracM(Fraction(0)), FracM(Fraction(0))]
+        rows = [
+            Row(basic="s1", cb=FracM(Fraction(0)), cells=[Fraction(2), Fraction(1), Fraction(0), Fraction(6)]),  # 6/2 = 3
+            Row(basic="s2", cb=FracM(Fraction(0)), cells=[Fraction(3), Fraction(0), Fraction(1), Fraction(9)]),  # 9/3 = 3
+        ]
+        t = Tableau(sense="max", columns=columns, cj=cj, rows=rows, zj=[], cj_zj=[]).evaluate()
+        leaving, ratios, ties = t.get_leaving_variable("x1")
+        assert leaving in ("s1", "s2")
+        assert set(ties) == {"s1", "s2"}
 
     def test_min_ratio_ignores_negative_and_zero_cells(self):
         columns = ["x1", "s1", "s2", "bj"]
@@ -266,7 +290,7 @@ class TestTableauMinRatio:
             Row(basic="s2", cb=FracM(Fraction(0)), cells=[Fraction(2), Fraction(0), Fraction(1), Fraction(6)]),
         ]
         t = Tableau(sense="max", columns=columns, cj=cj, rows=rows, zj=[], cj_zj=[]).evaluate()
-        leaving, ratios = t.min_ratio("x1")
+        leaving, ratios, ties = t.get_leaving_variable("x1")
         # Row 1 has -1, so it cannot leave. Only Row 2 (s2) is eligible.
         assert leaving == "s2"
 
@@ -277,9 +301,10 @@ class TestTableauMinRatio:
             Row(basic="s1", cb=FracM(Fraction(0)), cells=[Fraction(-2), Fraction(1), Fraction(10)]),
         ]
         t = Tableau(sense="max", columns=columns, cj=cj, rows=rows, zj=[], cj_zj=[]).evaluate()
-        leaving, ratios = t.min_ratio("x1")
+        leaving, ratios, ties = t.get_leaving_variable("x1")
         # No positive pivot candidates in column x1 -> leaving is None (unbounded)
         assert leaving is None
+        assert ties == []
 
     def test_min_ratio_zero_rhs_degenerate(self):
         columns = ["x1", "s1", "s2", "bj"]
@@ -289,7 +314,7 @@ class TestTableauMinRatio:
             Row(basic="s2", cb=FracM(Fraction(0)), cells=[Fraction(2), Fraction(0), Fraction(1), Fraction(4)]),  # b2 = 4
         ]
         t = Tableau(sense="max", columns=columns, cj=cj, rows=rows, zj=[], cj_zj=[]).evaluate()
-        leaving, _ = t.min_ratio("x1")
+        leaving, _, _ = t.get_leaving_variable("x1")
         # Ratio 0/1 = 0 is minimal
         assert leaving == "s1"
 
@@ -317,7 +342,6 @@ class TestTableauPivot:
         s1_row = next(r for r in pivoted.rows if r.basic == "s1")
         assert s1_row.cells == [Fraction(0), Fraction(1, 2), Fraction(1), Fraction(-1, 2), Fraction(3, 2)]
 
-    @pytest.mark.xfail(reason="Tableau.pivot muta self.rows in-place y retorna self en vez de devolver un nuevo Tableau inmutable")
     def test_pivot_immutability(self):
         """CRITICAL: pivot() must return a NEW Tableau and must NOT mutate the original."""
         tableau = make_standard_tableau_max()
@@ -348,3 +372,18 @@ class TestTableauPivot:
         t = Tableau(sense="max", columns=columns, cj=cj, rows=rows, zj=[], cj_zj=[]).evaluate()
         with pytest.raises(ValueError, match="Pivot value is zero"):
             t.pivot("s1", "x1")
+class TestTableauPivotValue:
+    def test_get_pivot_value_returns_cell_value(self):
+        tableau = make_standard_tableau_max()
+        assert tableau.get_pivot_value("s2", "x1") == Fraction(2)
+        assert tableau.get_pivot_value("s1", "x1") == Fraction(1)
+
+    def test_get_pivot_value_raises_on_invalid_leaving(self):
+        tableau = make_standard_tableau_max()
+        with pytest.raises(ValueError, match="Leaving variable nonexistent not found"):
+            tableau.get_pivot_value("nonexistent", "x1")
+
+    def test_get_pivot_value_raises_on_invalid_entering(self):
+        tableau = make_standard_tableau_max()
+        with pytest.raises(ValueError):
+            tableau.get_pivot_value("s2", "nonexistent")
