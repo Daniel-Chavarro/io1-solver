@@ -72,7 +72,14 @@ def _run_method(method_id: str, problem: Problem):
             status_code=501,
             detail=f"El metodo '{method_id}' aun no esta implementado (ver issues)")
     except MethodNotAdmissibleError as exc:
-        raise HTTPException(status_code=422, detail=str(exc))
+        return JSONResponse(
+            status_code=422,
+            content={
+                "code": "METHOD_NOT_ADMISSIBLE",
+                "message": str(exc),
+                "detail": str(exc),
+            },
+        )
     result.elapsed_ms = round((time.perf_counter() - t0) * 1000, 3)
     return result
 

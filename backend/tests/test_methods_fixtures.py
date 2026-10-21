@@ -8,12 +8,18 @@ from pathlib import Path
 
 import pytest
 
-from solver.methods import REGISTRY
+from solver.methods import REGISTRY, MethodNotAdmissibleError
 from solver.schemas import Problem
 
 EXAMPLES = Path(__file__).resolve().parents[2] / "examples"
 CASES = [
-    (eid, method)
+    pytest.param(
+        eid,
+        method,
+        marks=pytest.mark.skip(reason="TODO(P4): quitar cuando big_m este implementado")
+        if method == "big_m"
+        else (),
+    )
     for eid in ("bakery-real", "test-unbounded", "test-infeasible")
     for method in ("simplex", "big_m")
 ]
@@ -23,14 +29,13 @@ def _load(example_id):
     return json.loads((EXAMPLES / f"{example_id}.json").read_text(encoding="utf-8"))
 
 
-@pytest.mark.skip(reason="TODO(P3/P4): quitar cuando build+interpret esten implementados")
 @pytest.mark.parametrize(("example_id", "method_id"), CASES)
 def test_fixture(example_id, method_id):
     ex = _load(example_id)
     expected = ex["expected"][method_id]
     problem = Problem(**ex["problem"])
     if expected.get("admissible") is False:
-        with pytest.raises(Exception):
+        with pytest.raises(MethodNotAdmissibleError):
             REGISTRY[method_id].build(problem)
         return
     result = REGISTRY[method_id].run(problem)
