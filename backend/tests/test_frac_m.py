@@ -50,6 +50,12 @@ class TestFracMArithmetic:
         res = a * b
         assert res == FracM(Fraction(-10), Fraction(15))  # 15M - 10
 
+    def test_mul_by_plain_fraction(self):
+        val = FracM(Fraction(3, 2), Fraction(-4))  # -4M + 3/2
+        assert val * Fraction(1, 2) == FracM(Fraction(3, 4), Fraction(-2))
+        assert Fraction(1, 2) * val == FracM(Fraction(3, 4), Fraction(-2))
+        assert val * 2 == FracM(Fraction(3), Fraction(-8))
+
     def test_mul_m_by_m_raises_value_error(self):
         a = FracM(Fraction(1), Fraction(1))  # M + 1
         b = FracM(Fraction(2), Fraction(2))  # 2M + 2
