@@ -225,6 +225,12 @@ class TestSolverLoop:
         with pytest.raises(RuntimeError, match="Maximum iterations"):
             solve(t, max_iter=1)
 
+    def test_solve_exactly_max_iter_pivots_is_not_exceeded(self):
+        """Reaching the optimum on the last allowed pivot must not raise."""
+        result = solve(make_two_step_max_tableau(), max_iter=2)
+        assert result.status == "optimal"
+        assert len(result.iterations) == 2
+
     def test_solve_iteration_snapshots_are_independent(self):
         """Verifies each snapshot in result.iterations is frozen and unaffected by subsequent pivots."""
         t = make_two_step_max_tableau()
