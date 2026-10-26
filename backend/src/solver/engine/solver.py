@@ -34,5 +34,42 @@ class EngineResult:
 
 
 def solve(initial: Tableau, max_iter: int = 200) -> EngineResult:
-    # TODO(P3 - Niko784): implement the loop per docs/contracts.md section 2
-    raise NotImplementedError("engine.solve")
+    """
+    Solve a linear programming problem using the simplex method.
+    
+    It asumes that the tableau is already in canonical form and that the problem is feasible.
+    Also that the tableau is complete, i.e. all columns are present, including the artificial variables.
+    """
+    
+    tableau: Tableau = initial
+    iterations: list[Iteration] = []
+    
+    for i in range(max_iter):
+        if tableau.is_optimal():
+            return EngineResult(status="optimal", iterations=iterations, final=tableau)
+        
+        entering = tableau.get_entering_variable()
+        if entering is None:
+            return EngineResult(status="optimal", iterations=iterations, final=tableau)
+        
+        leaving, ratios, ties = tableau.get_leaving_variable(entering)
+        
+        if leaving is None:
+            return EngineResult(status="unbounded", iterations=iterations, final=tableau)
+        
+        pivot_value = tableau.get_pivot_value(leaving, entering)
+        
+        tableau = tableau.pivot(leaving, entering).evaluate()
+        
+        iteration = Iteration(
+            number=i + 1,
+            tableau=tableau,
+            entering=entering,
+            leaving=leaving,
+            pivot=str(pivot_value),
+            ratios=[str(r) for r in ratios],
+            ties=ties
+        )
+        iterations.append(iteration)
+    
+    raise RuntimeError(f"Maximum iterations ({max_iter}) exceeded. Possible cycling or bug in the algorithm.")
