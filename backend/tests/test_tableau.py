@@ -362,7 +362,7 @@ class TestTableauPivot:
 
     def test_pivot_raises_on_invalid_entering_variable(self):
         tableau = make_standard_tableau_max()
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="Entering variable nonexistent not found"):
             tableau.pivot("s2", "nonexistent")
 
     def test_pivot_raises_on_zero_pivot_element(self):
@@ -385,5 +385,5 @@ class TestTableauPivotValue:
 
     def test_get_pivot_value_raises_on_invalid_entering(self):
         tableau = make_standard_tableau_max()
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="Entering variable nonexistent not found"):
             tableau.get_pivot_value("s2", "nonexistent")

@@ -1,13 +1,15 @@
 """Generic simplex loop - method-agnostic (contracts section 2).
 
 Fixed rules for every method:
-1. entering column = most negative z entry (FracM lexicographic order).
-2. no negative entries -> optimal.
-3. min ratio; column without positive entries -> unbounded (iteration kept).
-4. pivot, snapshot, repeat. max_iter exceeded -> RuntimeError (a bug, not a
-   special case of the method).
+1. entering column = most positive C_j - Z_j (max) or most negative (min),
+   compared with the FracM lexicographic order.
+2. no candidate -> optimal.
+3. min ratio; column without positive entries -> unbounded.
+4. pivot, evaluate, snapshot, repeat. More than max_iter pivots ->
+   RuntimeError (a bug, not a special case of the method).
 
-The engine ALWAYS maximizes; min->max normalization belongs to method builders.
+The engine works in the tableau's original sense (max or min); it never
+normalizes min->max and knows nothing about artificial variables.
 """
 from dataclasses import dataclass, field
 from typing import Literal
@@ -44,7 +46,7 @@ def solve(initial: Tableau, max_iter: int = 200) -> EngineResult:
     tableau: Tableau = initial
     iterations: list[Iteration] = []
     
-    for i in range(max_iter):
+    for i in range(max_iter + 1):
         if tableau.is_optimal():
             return EngineResult(status="optimal", iterations=iterations, final=tableau)
         
@@ -56,6 +58,10 @@ def solve(initial: Tableau, max_iter: int = 200) -> EngineResult:
         
         if leaving is None:
             return EngineResult(status="unbounded", iterations=iterations, final=tableau)
+        
+        # One more pivot would exceed the budget
+        if i == max_iter:
+            break
         
         pivot_value = tableau.get_pivot_value(leaving, entering)
         

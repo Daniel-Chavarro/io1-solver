@@ -35,9 +35,9 @@ class Tableau:
             raise ValueError(f"Leaving variable {leaving} not found in tableau rows")
         
         # Search for the pivot column index corresponding to the entering variable
-        pivot_col_index = self.columns.index(entering)
-        if pivot_col_index < 0:
+        if entering not in self.columns:
             raise ValueError(f"Entering variable {entering} not found in tableau columns")
+        pivot_col_index = self.columns.index(entering)
         
         # Check if the pivot value is zero to avoid division by zero
         pivot_value = pivot_row.cells[pivot_col_index]
@@ -79,7 +79,7 @@ class Tableau:
         
         for j, col in enumerate(self.columns):
             zj_value: FracM = sum(
-                (row.cb * FracM(row.cells[j], Fraction(0)) for row in self.rows),
+                (row.cb * row.cells[j] for row in self.rows),
                 FracM(Fraction(0), Fraction(0)),
             )
             new_zj.append(zj_value)
@@ -147,8 +147,8 @@ class Tableau:
         if pivot_row is None:
             raise ValueError(f"Leaving variable {leaving} not found in tableau rows")
         
-        pivot_col_index = self.columns.index(entering)
-        if pivot_col_index < 0:
+        if entering not in self.columns:
             raise ValueError(f"Entering variable {entering} not found in tableau columns")
+        pivot_col_index = self.columns.index(entering)
         
         return pivot_row.cells[pivot_col_index]

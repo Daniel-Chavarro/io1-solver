@@ -1,7 +1,7 @@
 """Fixture-driven tests over examples/*.json (contracts section 7).
 
 The same JSON feeds the UI (/api/ejemplos) and pytest. Skips come off as each
-method lands: simplex -> TODO(P3), big_m + infeasible -> TODO(P4).
+method lands (simplex and big_m are both live now).
 """
 import json
 from pathlib import Path
@@ -13,13 +13,7 @@ from solver.schemas import Problem
 
 EXAMPLES = Path(__file__).resolve().parents[2] / "examples"
 CASES = [
-    pytest.param(
-        eid,
-        method,
-        marks=pytest.mark.skip(reason="TODO(P4): quitar cuando big_m este implementado")
-        if method == "big_m"
-        else (),
-    )
+    (eid, method)
     for eid in ("bakery-real", "test-unbounded", "test-infeasible")
     for method in ("simplex", "big_m")
 ]
