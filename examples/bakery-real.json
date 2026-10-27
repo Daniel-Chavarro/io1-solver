@@ -1,81 +1,209 @@
 {
   "id": "bakery-real",
-  "name": "Plan de producción — panadería (PLACEHOLDER)",
-  "description": "PLACEHOLDER: P1 debe reemplazar por el caso real del grupo (empresa, datos con fuente y supuestos). Todos los límites son <= para que Simplex y Gran M resuelvan el mismo modelo.",
+  "name": "Plan de producción — café empacado (Procafecol)",
+  "description": "Caso real del grupo: plan mensual de 5 líneas de café empacado de Procafecol S.A. (docs: Entrega 1, sección 6). Las cotas de las variables se modelan como restricciones. Contiene restricciones >=, por eso solo lo resuelve Gran M.",
   "kind": "real",
   "problem": {
-    "name": "Plan de producción — panadería",
+    "name": "Plan de producción mensual — café empacado",
     "variables": [
       {
-        "name": "pandesal",
-        "unit": "lotes"
+        "name": "Tradicional",
+        "unit": "ton/mes"
       },
       {
-        "name": "hojaldre",
-        "unit": "lotes"
+        "name": "Premium Balanceado",
+        "unit": "ton/mes"
       },
       {
-        "name": "croissant",
-        "unit": "lotes"
+        "name": "Orgánico",
+        "unit": "ton/mes"
+      },
+      {
+        "name": "Origen Regional",
+        "unit": "ton/mes"
+      },
+      {
+        "name": "Mujeres Cafeteras",
+        "unit": "ton/mes"
       }
     ],
     "objective": {
       "sense": "max",
       "coefficients": [
-        "40",
-        "30",
-        "25"
+        "14.20",
+        "18.50",
+        "22.20",
+        "24.50",
+        "26.00"
       ]
     },
     "constraints": [
       {
-        "name": "horas_horno",
+        "name": "Tostión",
+        "coefficients": [
+          "3.20",
+          "3.60",
+          "4.20",
+          "4.40",
+          "4.50"
+        ],
+        "op": "<=",
+        "rhs": "720"
+      },
+      {
+        "name": "Molienda",
+        "coefficients": [
+          "2.50",
+          "2.20",
+          "1.50",
+          "1.60",
+          "1.80"
+        ],
+        "op": "<=",
+        "rhs": "420"
+      },
+      {
+        "name": "Envasado",
+        "coefficients": [
+          "2.80",
+          "3.00",
+          "3.40",
+          "3.50",
+          "3.60"
+        ],
+        "op": "<=",
+        "rhs": "600"
+      },
+      {
+        "name": "Café verde total",
+        "coefficients": [
+          "1.18",
+          "1.18",
+          "1.18",
+          "1.18",
+          "1.18"
+        ],
+        "op": "<=",
+        "rhs": "236"
+      },
+      {
+        "name": "Café verde especial",
+        "coefficients": [
+          "0",
+          "0",
+          "1.18",
+          "1.18",
+          "1.18"
+        ],
+        "op": "<=",
+        "rhs": "76.7"
+      },
+      {
+        "name": "Mínimo retail",
         "coefficients": [
           "1",
-          "0.8",
-          "1.5"
+          "1",
+          "0",
+          "0",
+          "0"
         ],
-        "op": "<=",
-        "rhs": "60"
+        "op": ">=",
+        "rhs": "95"
       },
       {
-        "name": "kg_harina",
+        "name": "Mínimo 25% especial",
         "coefficients": [
-          "0.5",
-          "0.4",
-          "0.3"
+          "-0.25",
+          "-0.25",
+          "0.75",
+          "0.75",
+          "0.75"
         ],
-        "op": "<=",
-        "rhs": "100"
+        "op": ">=",
+        "rhs": "0"
       },
       {
-        "name": "horas_moldeado",
+        "name": "Cota mín Tradicional",
         "coefficients": [
-          "0.3",
-          "0.5",
-          "0.7"
+          "1",
+          "0",
+          "0",
+          "0",
+          "0"
         ],
-        "op": "<=",
+        "op": ">=",
         "rhs": "35"
       },
       {
-        "name": "demanda_max_pandesal",
+        "name": "Cota mín Premium Balanceado",
         "coefficients": [
+          "0",
+          "1",
+          "0",
+          "0",
+          "0"
+        ],
+        "op": ">=",
+        "rhs": "30"
+      },
+      {
+        "name": "Cota máx Orgánico",
+        "coefficients": [
+          "0",
+          "0",
           "1",
           "0",
           "0"
         ],
         "op": "<=",
-        "rhs": "70"
+        "rhs": "35"
+      },
+      {
+        "name": "Cota máx Origen Regional",
+        "coefficients": [
+          "0",
+          "0",
+          "0",
+          "1",
+          "0"
+        ],
+        "op": "<=",
+        "rhs": "40"
+      },
+      {
+        "name": "Cota mín Mujeres Cafeteras",
+        "coefficients": [
+          "0",
+          "0",
+          "0",
+          "0",
+          "1"
+        ],
+        "op": ">=",
+        "rhs": "10.5"
+      },
+      {
+        "name": "Cota máx Mujeres Cafeteras",
+        "coefficients": [
+          "0",
+          "0",
+          "0",
+          "0",
+          "1"
+        ],
+        "op": "<=",
+        "rhs": "30"
       }
     ]
   },
   "expected": {
     "simplex": {
-      "status": "optimal"
+      "status": "not_admissible",
+      "admissible": false
     },
     "big_m": {
-      "status": "optimal"
+      "status": "optimal",
+      "objective_value": "135857/36"
     }
   }
 }

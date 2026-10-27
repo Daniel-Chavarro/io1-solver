@@ -23,12 +23,31 @@ EXAMPLES_DIR = Path(
 )
 
 
+# Codes raised by schemas.py validators (pydantic error `type` == API code).
+_VALIDATION_CODES = {"INVALID_NUMBER", "EMPTY_FIELD", "DUPLICATE_NAME",
+                     "SIZE_LIMIT", "INVALID_INPUT"}
+
+
+def _error(status: int, code: str, message: str) -> JSONResponse:
+    """Every bad-data answer has the same shape: {code, message}, in Spanish."""
+    return JSONResponse(status_code=status, content={"code": code, "message": message})
+
+
 @app.exception_handler(RequestValidationError)
 async def _validation_handler(_req, exc: RequestValidationError):
-    msg = "Datos invalidos"
-    if exc.errors():
-        msg = exc.errors()[0].get("msg", "").replace("Value error, ", "") or msg
-    return JSONResponse(status_code=422, content={"code": "INVALID_INPUT", "message": msg})
+    errors = exc.errors()
+    err = errors[0] if errors else {}
+    kind = err.get("type", "")
+    where = ".".join(str(p) for p in err.get("loc", ()) if p != "body")
+
+    if kind in _VALIDATION_CODES:
+        return _error(422, kind, err["msg"])
+    if kind == "missing":
+        return _error(422, "EMPTY_FIELD", f"Falta el campo obligatorio '{where}'")
+    if kind == "json_invalid":
+        return _error(422, "INVALID_INPUT", "El cuerpo de la peticion no es un JSON valido")
+    return _error(422, "INVALID_INPUT",
+                  f"Dato invalido en '{where}'" if where else "Datos invalidos")
 
 
 @app.get("/health")
@@ -63,8 +82,8 @@ def get_example(example_id: str):
 def _run_method(method_id: str, problem: Problem):
     method = REGISTRY.get(method_id)
     if method is None:
-        raise HTTPException(status_code=422, detail=f"Metodo desconocido: '{method_id}'")
-    t0 = time.perf_counter()
+        return _error(422, "INVALID_INPUT", f"Metodo desconocido: '{method_id}'")
+    t0 = time.perf_counter()  # elapsed_ms covers build + solve + interpret (method.run)
     try:
         result = method.run(problem)
     except NotImplementedError:
@@ -72,7 +91,7 @@ def _run_method(method_id: str, problem: Problem):
             status_code=501,
             detail=f"El metodo '{method_id}' aun no esta implementado (ver issues)")
     except MethodNotAdmissibleError as exc:
-        raise HTTPException(status_code=422, detail=str(exc))
+        return _error(422, "METHOD_NOT_ADMISSIBLE", str(exc))
     result.elapsed_ms = round((time.perf_counter() - t0) * 1000, 3)
     return result
 
@@ -85,7 +104,7 @@ def resolver(req: ResolverRequest):
 @app.post("/api/sensibilidad")
 def sensibilidad(req: SensitivityRequest):
     if req.method not in REGISTRY:
-        raise HTTPException(status_code=422, detail=f"Metodo desconocido: '{req.method}'")
+        return _error(422, "INVALID_INPUT", f"Metodo desconocido: '{req.method}'")
     try:
         return analyze(req.problem, REGISTRY[req.method])
     except NotImplementedError:
