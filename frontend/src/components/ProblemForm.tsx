@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from "react";
 import type { MethodId, Op, Problem } from "../types";
 import { METHOD_NAMES } from "../types";
-import { validateProblem } from "../validation";
+import { MAX_CONSTRAINTS, MAX_VARIABLES, validateProblem } from "../validation";
 import {
   addConstraint,
   addVariable,
@@ -224,7 +224,7 @@ export function ProblemForm({
             </div>
           ))}
         </div>
-        {value.variables.length < 8 ? (
+        {value.variables.length < MAX_VARIABLES ? (
           <button
             type="button"
             className="btn btn-quiet"
@@ -233,7 +233,7 @@ export function ProblemForm({
             Añadir variable
           </button>
         ) : (
-          <p className="text-xs text-ink-soft">Máximo 8 variables.</p>
+          <p className="text-xs text-ink-soft">Máximo {MAX_VARIABLES} variables.</p>
         )}
       </section>
 
@@ -326,7 +326,7 @@ export function ProblemForm({
             </div>
           ))}
         </div>
-        {value.constraints.length < 8 ? (
+        {value.constraints.length < MAX_CONSTRAINTS ? (
           <button
             type="button"
             className="btn btn-quiet"
@@ -335,7 +335,7 @@ export function ProblemForm({
             Añadir restricción
           </button>
         ) : (
-          <p className="text-xs text-ink-soft">Máximo 8 restricciones.</p>
+          <p className="text-xs text-ink-soft">Máximo {MAX_CONSTRAINTS} restricciones.</p>
         )}
       </section>
 

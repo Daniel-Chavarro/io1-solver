@@ -6,7 +6,8 @@
 import type { Problem } from "./types";
 
 export const DECIMAL = /^-?\d+(\.\d+)?$/;
-export const MAX_SIZE = 8;
+export const MAX_VARIABLES = 8;
+export const MAX_CONSTRAINTS = 13;
 
 export type ProblemErrors = Record<string, string>;
 
@@ -33,10 +34,10 @@ export function validateProblem(problem: Problem): ProblemErrors {
       errors[`v${i}`] = "Hay dos variables con el mismo nombre.";
   });
 
-  if (problem.variables.length > MAX_SIZE)
-    errors.v0 = `Máximo ${MAX_SIZE} variables.`;
-  if (problem.constraints.length > MAX_SIZE)
-    errors.c0 = `Máximo ${MAX_SIZE} restricciones.`;
+  if (problem.variables.length > MAX_VARIABLES)
+    errors.v0 = `Máximo ${MAX_VARIABLES} variables.`;
+  if (problem.constraints.length > MAX_CONSTRAINTS)
+    errors.c0 = `Máximo ${MAX_CONSTRAINTS} restricciones.`;
 
   problem.constraints.forEach((c, i) => {
     if (!c.name.trim()) errors[`c${i}`] = "Toda restricción necesita nombre.";

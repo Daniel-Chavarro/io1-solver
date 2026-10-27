@@ -219,7 +219,7 @@ class TestSimplexApiContract:
         assert "Gran M" in data["message"]
 
     def test_api_resolver_simplex_success(self):
-        ex = client.get("/api/ejemplos/bakery-real").json()
+        ex = client.get("/api/ejemplos/simplex-grupo1").json()
         r = client.post(
             "/api/resolver", json={"method": "simplex", "problem": ex["problem"]}
         )

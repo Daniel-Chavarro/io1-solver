@@ -36,8 +36,8 @@ Estado del código al planear (`frontend/src/`): existen `types.ts`
 > `MethodTabs.tsx`) y el método se elige en el formulario (F14).
 
 **Supuesto explícito de F11:** la entrada de datos sigue limitada a 1..8
-variables y 1..8 restricciones (`SIZE_LIMIT` del contrato, igual que el
-curso). Lo que escala es el *renderizado*: `TableauTable` no asume
+variables y 1..13 restricciones (`SIZE_LIMIT` del contrato; el curso pide 8×8,
+ampliado a 13 restricciones para el caso real). Lo que escala es el *renderizado*: `TableauTable` no asume
 dimensiones y dibuja cualquier R×C. Si algún día se amplía el contrato,
 la UI ya no es el cuello de botella.
 
@@ -319,7 +319,7 @@ Si el estado compartido crece, un reducer; no antes.
 | Número no parseable | inline | "Escribe un número (ej. 2.5 o -4)." |
 | Nombre vacío o duplicado | inline | "Los nombres deben ser únicos y no vacíos." |
 | Coeficientes ≠ variables | inline | "Debe haber un coeficiente por variable." |
-| Más de 8 variables/restricciones | UI (oculta "+") + backend | `SIZE_LIMIT` |
+| Más de 8 variables o 13 restricciones | UI (oculta "+") + backend | `SIZE_LIMIT` |
 | Simplex con `≥`, `=` o RHS negativo | backend 422 | `METHOD_NOT_ADMISSIBLE`: se muestra `message` tal cual (sugiere Gran M) |
 | Servidor no responde | cliente | "No se pudo contactar al servidor." |
 

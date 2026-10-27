@@ -2,7 +2,7 @@
 // Adding or removing a variable keeps every coefficient array in sync, so
 // the invariant `len(coefficients) == len(variables)` always holds in the UI.
 import type { Constraint, Problem, Sense, Variable } from "./types";
-import { MAX_SIZE } from "./validation";
+import { MAX_CONSTRAINTS, MAX_VARIABLES } from "./validation";
 
 export function patchVariable(
   p: Problem,
@@ -57,7 +57,7 @@ export function setSense(p: Problem, sense: Sense): Problem {
 }
 
 export function addVariable(p: Problem): Problem {
-  if (p.variables.length >= MAX_SIZE) return p;
+  if (p.variables.length >= MAX_VARIABLES) return p;
   return {
     ...p,
     variables: [...p.variables, { name: "", unit: "" }],
@@ -81,7 +81,7 @@ export function removeVariable(p: Problem, i: number): Problem {
 }
 
 export function addConstraint(p: Problem): Problem {
-  if (p.constraints.length >= MAX_SIZE) return p;
+  if (p.constraints.length >= MAX_CONSTRAINTS) return p;
   return {
     ...p,
     constraints: [

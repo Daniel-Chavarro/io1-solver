@@ -1,0 +1,28 @@
+{
+  "id": "simplex-grupo1",
+  "name": "Contenedores en la nube (Grupo 1)",
+  "description": "Ejercicio del Grupo 3 para el Grupo 1 (docs/ejercicios/simplex-grupo1.pdf): max 40x1+25x2+45x3 con 4 restricciones <=. Optimo unico x=(10,20,15), Z=1575 en 3 pivoteos.",
+  "kind": "test",
+  "problem": {
+    "name": "Contenedores en la nube",
+    "variables": [
+      { "name": "Web", "unit": "contenedores" },
+      { "name": "Base de datos", "unit": "contenedores" },
+      { "name": "Procesamiento", "unit": "contenedores" }
+    ],
+    "objective": {
+      "sense": "max",
+      "coefficients": ["40", "25", "45"]
+    },
+    "constraints": [
+      { "name": "vCPU", "coefficients": ["2", "1", "2"], "op": "<=", "rhs": "70" },
+      { "name": "RAM", "coefficients": ["1", "2", "1"], "op": "<=", "rhs": "65" },
+      { "name": "SSD", "coefficients": ["3", "1", "4"], "op": "<=", "rhs": "110" },
+      { "name": "Licencias BD", "coefficients": ["0", "1", "0"], "op": "<=", "rhs": "30" }
+    ]
+  },
+  "expected": {
+    "simplex": { "status": "optimal", "objective_value": "1575" },
+    "big_m": { "status": "optimal", "objective_value": "1575" }
+  }
+}

@@ -79,8 +79,8 @@ class Problem(BaseModel):
             )
         for x in self.objective.coefficients:
             check_number(x, "la funcion objetivo")
-        if not 1 <= len(self.constraints) <= 8:
-            raise _error("SIZE_LIMIT", "El problema admite entre 1 y 8 restricciones")
+        if not 1 <= len(self.constraints) <= 13:
+            raise _error("SIZE_LIMIT", "El problema admite entre 1 y 13 restricciones")
         for c in self.constraints:
             if not c.name.strip():
                 raise _error("EMPTY_FIELD", "Toda restriccion necesita nombre")
