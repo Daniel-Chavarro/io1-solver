@@ -12,7 +12,7 @@ def test_health():
 
 def test_examples_are_listed():
     ids = {e["id"] for e in client.get("/api/ejemplos").json()}
-    assert {"bakery-real", "test-unbounded", "test-infeasible"} <= ids
+    assert {"bakery-real", "test-unbounded", "test-infeasible", "simplex-grupo1"} <= ids
 
 
 def test_example_detail_returns_problem():
@@ -114,7 +114,7 @@ def test_too_many_variables_is_size_limit():
 
 
 def test_too_many_or_zero_constraints_is_size_limit():
-    cons = [{"name": f"c{i}", "coefficients": ["1"], "op": "<=", "rhs": "1"} for i in range(9)]
+    cons = [{"name": f"c{i}", "coefficients": ["1"], "op": "<=", "rhs": "1"} for i in range(14)]
     _assert_error(_post(_problem(constraints=cons)), "SIZE_LIMIT")
     _assert_error(_post(_problem(constraints=[])), "SIZE_LIMIT")
 

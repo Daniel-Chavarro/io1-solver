@@ -8,7 +8,7 @@
 
 ## 1. Propósito y Reglas Fundamentales
 
-**`io1-solver`** es una aplicación web diseñada para formular, resolver paso a paso, comparar y realizar análisis de sensibilidad sobre problemas de **Programación Lineal (PL)** de hasta **8 variables de decisión y 8 restricciones**, empleando los métodos **Simplex estándar** y **Gran M**.
+**`io1-solver`** es una aplicación web diseñada para formular, resolver paso a paso, comparar y realizar análisis de sensibilidad sobre problemas de **Programación Lineal (PL)** de hasta **8 variables de decisión y 13 restricciones**, empleando los métodos **Simplex estándar** y **Gran M**.
 
 El diseño arquitectónico responde directamente a las restricciones académicas del curso:
 1. **Cero librerías externas de optimización:** Prohibido usar `scipy`, `pulp`, `ortools` o similares. Todo el motor algebraico está construido desde cero en [`backend/src/solver/engine/`](backend/src/solver/engine/) usando únicamente la librería estándar de Python (`fractions.Fraction` y `decimal.Decimal`).
@@ -150,7 +150,7 @@ Todos los mensajes dirigidos al usuario (errores de validación, detalles de cas
 
 ### Reglas de Validación de Entrada (`schemas.py` → HTTP 422)
 - El problema debe tener nombre no vacío.
-- Entre **1 y 8 variables** y entre **1 y 8 restricciones**.
+- Entre **1 y 8 variables** y entre **1 y 13 restricciones**.
 - Nombres de variables únicos y no vacíos; toda restricción debe tener nombre.
 - Cantidad de coeficientes en la función objetivo y en cada restricción igual al número de variables.
 - Todo número debe cumplir la expresión regular `^-?\d+(\.\d+)?$` (string entero o decimal con punto).

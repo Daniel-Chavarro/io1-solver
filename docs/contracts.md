@@ -39,7 +39,7 @@ class Problem(BaseModel):
     constraints: list[Constraint]   # 1..8
 ```
 
-Validaciones (→ 422 en español): nombres únicos y no vacíos; `len(coefficients) == len(variables)`; números parseables; máximo 8 variables y 8 restricciones.
+Validaciones (→ 422 en español): nombres únicos y no vacíos; `len(coefficients) == len(variables)`; números parseables; máximo 8 variables y 13 restricciones.
 
 ## 2. Núcleo (`engine/`) — no sabe que existe un método
 
@@ -161,7 +161,7 @@ class MethodResult(BaseModel):
 - **build** — valida y si no pasa lanza `MethodNotAdmissibleError` (→ 422 con mensaje español):
   - toda restricción debe ser `<=` ("El método Simplex solo admite restricciones ≤ … usa Gran M")
   - `rhs >= 0` en todas (forma estándar; RHS negativo → sugerir Gran M)
-  - ≤ 8 variables / ≤ 8 restricciones
+  - ≤ 8 variables / ≤ 13 restricciones
   - $C_j$ = coeficientes originales del objetivo; holguras con $C_j = 0$
   - agrega `s_1..s_m`; base inicial = holguras ($C_B = 0$); llama `evaluate()` al final
 - **interpret**:

@@ -47,9 +47,9 @@ class BigMMethod(SimplexMethod):
             raise MethodNotAdmissibleError(
                 "El problema admite entre 1 y 8 variables."
             )
-        if not 1 <= len(problem.constraints) <= 8:
+        if not 1 <= len(problem.constraints) <= 13:
             raise MethodNotAdmissibleError(
-                "El problema admite entre 1 y 8 restricciones."
+                "El problema admite entre 1 y 13 restricciones."
             )
 
         normalized = _normalized_rows(problem)
