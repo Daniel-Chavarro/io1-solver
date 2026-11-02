@@ -168,3 +168,76 @@ def test_braces_in_user_input_never_break_the_error_message():
         r = _post(p)
         _assert_error(r, "INVALID_NUMBER")
         assert bad in r.json()["message"]
+
+
+# ---- POST /api/comparar (contracts section 5) ----
+
+def test_comparar_both_optimal_reports_metrics_and_same_objective():
+    r = client.post("/api/comparar", json={"problem": GRUPO1})
+    assert r.status_code == 200
+    body = r.json()
+    assert set(body) == {"results", "same_objective", "verdict"}
+    assert body["same_objective"] is True
+    assert "1575" in body["verdict"]
+
+    for m in ("simplex", "big_m"):
+        summary = body["results"][m]
+        assert summary["method"] == m
+        assert summary["status"] == "optimal"
+        assert summary["iterations"] == 4
+        assert summary["tableau_shape"] == "4x8"
+        assert isinstance(summary["elapsed_ms"], (int, float)) and summary["elapsed_ms"] >= 0
+
+
+def test_comparar_not_admissible_for_simplex_is_status_not_error():
+    problem = client.get("/api/ejemplos/bakery-real").json()["problem"]
+    r = client.post("/api/comparar", json={"problem": problem})
+    assert r.status_code == 200
+    body = r.json()
+    assert body["same_objective"] is None
+    assert body["results"]["simplex"] == {
+        "method": "simplex",
+        "status": "not_admissible",
+        "iterations": None,
+        "elapsed_ms": None,
+        "tableau_shape": None,
+    }
+    big_m = body["results"]["big_m"]
+    assert big_m["status"] == "optimal"
+    assert big_m["iterations"] > 0
+    assert big_m["tableau_shape"] == "13x24"
+    assert isinstance(big_m["elapsed_ms"], (int, float)) and big_m["elapsed_ms"] >= 0
+    assert "135857/36" in body["verdict"]
+
+
+def test_comparar_infeasible_and_unbounded_cases():
+    infeasible = client.get("/api/ejemplos/test-infeasible").json()["problem"]
+    r_inf = client.post("/api/comparar", json={"problem": infeasible}).json()
+    assert r_inf["same_objective"] is None
+    assert r_inf["results"]["simplex"]["status"] == "not_admissible"
+    assert r_inf["results"]["big_m"]["status"] == "infeasible"
+    assert "infactible" in r_inf["verdict"].lower()
+
+    unbounded = client.get("/api/ejemplos/test-unbounded").json()["problem"]
+    r_unb = client.post("/api/comparar", json={"problem": unbounded}).json()
+    assert r_unb["same_objective"] is None
+    assert r_unb["results"]["simplex"]["status"] == "unbounded"
+    assert r_unb["results"]["big_m"]["status"] == "unbounded"
+    assert "acotado" in r_unb["verdict"].lower()
+
+
+def test_comparar_detects_different_objective_values(monkeypatch):
+    from solver.methods import REGISTRY
+
+    orig_run = REGISTRY["big_m"].run
+
+    def fake_run(problem):
+        res = orig_run(problem)
+        return res.model_copy(update={"objective": {"sense": "max", "value": "9999"}})
+
+    monkeypatch.setattr(REGISTRY["big_m"], "run", fake_run)
+    r = client.post("/api/comparar", json={"problem": GRUPO1})
+    assert r.status_code == 200
+    body = r.json()
+    assert body["same_objective"] is False
+    assert "1575" in body["verdict"] and "9999" in body["verdict"]

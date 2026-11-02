@@ -73,3 +73,18 @@ export interface SensitivityReport {
   objective_ranges: ObjRange[];
   rhs_ranges: RhsRange[];
 }
+
+// Comparación (docs/contracts.md §5).
+export interface MethodSummary {
+  method: string;
+  status: string;
+  iterations: number | null;
+  elapsed_ms: number | null;
+  tableau_shape: string | null;
+}
+
+export interface Comparison {
+  results: Record<string, MethodSummary>;
+  same_objective: boolean | null;
+  verdict: string;
+}

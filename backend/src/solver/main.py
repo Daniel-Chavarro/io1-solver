@@ -111,9 +111,77 @@ def sensibilidad(req: SensitivityRequest):
         raise HTTPException(status_code=501, detail="Sensibilidad aun no implementada (ver issues)")
 
 
+def _comparison_verdict(
+    results: dict[str, MethodSummary],
+    z_values: dict[str, str],
+    same_objective: bool | None,
+) -> str:
+    s = results.get("simplex")
+    b = results.get("big_m")
+    if s is None or b is None:
+        return "Comparación disponible cuando ambos métodos estén registrados."
+
+    if s.status == "optimal" and b.status == "optimal":
+        z_s = z_values.get("simplex", "")
+        z_b = z_values.get("big_m", "")
+        if same_objective:
+            if s.iterations == b.iterations and s.tableau_shape == b.tableau_shape:
+                return (
+                    f"Ambos métodos alcanzaron el mismo óptimo (Z = {z_s}) en "
+                    f"{s.iterations} tablas ({s.tableau_shape}); como todas las "
+                    f"restricciones son ≤ con lado derecho no negativo, Gran M no "
+                    f"requirió variables artificiales y conviene Simplex por simplicidad."
+                )
+            return (
+                f"Ambos métodos alcanzaron el mismo óptimo (Z = {z_s}): "
+                f"Simplex usó {s.iterations} tablas ({s.tableau_shape}, {s.elapsed_ms} ms) y "
+                f"Gran M usó {b.iterations} tablas ({b.tableau_shape}, {b.elapsed_ms} ms)."
+            )
+        return (
+            f"Ambos métodos terminaron como óptimos pero con distinto valor de Z "
+            f"(Simplex: Z = {z_s}, Gran M: Z = {z_b})."
+        )
+
+    if s.status == "not_admissible":
+        if b.status == "optimal":
+            z_b = z_values.get("big_m", "")
+            return (
+                f"Simplex estándar no es admisible porque el problema tiene "
+                f"restricciones ≥, = o lados derechos negativos; Gran M lo resolvió "
+                f"hasta el óptimo (Z = {z_b}) en {b.iterations} tablas ({b.tableau_shape})."
+            )
+        if b.status == "infeasible":
+            return (
+                f"Simplex estándar no es admisible para este problema; Gran M "
+                f"determinó que el problema es infactible tras {b.iterations} tablas."
+            )
+        if b.status == "unbounded":
+            return (
+                f"Simplex estándar no es admisible para este problema; Gran M "
+                f"determinó que el problema no está acotado tras {b.iterations} tablas."
+            )
+
+    if s.status == "unbounded" and b.status == "unbounded":
+        return (
+            f"Ambos métodos determinaron que el problema no está acotado "
+            f"(Simplex en {s.iterations} tablas y Gran M en {b.iterations} tablas)."
+        )
+
+    if s.status == "infeasible" and b.status == "infeasible":
+        return (
+            f"Ambos métodos determinaron que el problema es infactible "
+            f"(Simplex en {s.iterations} tablas y Gran M en {b.iterations} tablas)."
+        )
+
+    return (
+        f"Simplex terminó con estado '{s.status}' y Gran M con estado '{b.status}'."
+    )
+
+
 @app.post("/api/comparar")
 def comparar(req: ComparisonRequest):
     results: dict[str, MethodSummary] = {}
+    z_values: dict[str, str] = {}
     for method_id, method in REGISTRY.items():
         t0 = time.perf_counter()
         try:
@@ -123,16 +191,19 @@ def comparar(req: ComparisonRequest):
                 iterations=len(res.iterations),
                 elapsed_ms=round((time.perf_counter() - t0) * 1000, 3),
                 tableau_shape=f"{len(res.final_table.rows)}x{len(res.final_table.columns)}")
+            z_values[method_id] = res.objective["value"]
         except NotImplementedError:
             results[method_id] = MethodSummary(method=method_id, status="not_implemented")
         except MethodNotAdmissibleError:
             results[method_id] = MethodSummary(method=method_id, status="not_admissible")
     same = None
     if len(results) == 2 and all(r.status == "optimal" for r in results.values()):
-        same = True  # TODO(P1): compare z values across methods, not just status
+        vals = list(z_values.values())
+        same = len(vals) == 2 and vals[0] == vals[1]
     return Comparison(
-        results=results, same_objective=same,
-        verdict="Comparacion completa cuando ambos metodos esten implementados")
+        results=results,
+        same_objective=same,
+        verdict=_comparison_verdict(results, z_values, same))
 
 
 # Serve the built frontend (README ruta A). Needs frontend/dist (npm run build).
