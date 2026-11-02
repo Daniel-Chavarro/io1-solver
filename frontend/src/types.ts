@@ -60,3 +60,16 @@ export interface MethodResult {
 }
 
 export interface ExampleSummary { id: string; name: string; description: string; kind: string }
+
+// Sensibilidad (docs/contracts.md §4). Rangos: "-inf"/"+inf" para infinitos.
+export interface ShadowPrice { constraint: string; unit: string; value: string; binding: boolean; phrase: string }
+export interface ReducedCost { variable: string; unit: string; value: string; phrase: string }
+export interface ObjRange { variable: string; current: string; range: [string, string]; phrase: string }
+export interface RhsRange { constraint: string; current: string; range: [string, string]; phrase: string }
+
+export interface SensitivityReport {
+  shadow_prices: ShadowPrice[];
+  reduced_costs: ReducedCost[];
+  objective_ranges: ObjRange[];
+  rhs_ranges: RhsRange[];
+}
