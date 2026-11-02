@@ -14,7 +14,7 @@ backend/    paquete `solver` (uv): engine/ (motor genérico), methods/ (adaptado
             Simplex y Gran M), sensitivity.py, schemas.py, tests/
 frontend/   React + TS + Tailwind (Vite); sirve el stepper de tablas
 examples/    fixtures JSON compartidos: UI (/api/ejemplos) y pytest
-docs/       contracts.md (fuente de verdad de los contratos) + informe/
+docs/       contracts.md (contratos de API) + informe/informe-comparativo.md
 ```
 
 El contrato de cada módulo (qué recibe, qué devuelve, casos especiales) está
@@ -22,15 +22,26 @@ en **`docs/contracts.md`**.
 
 ## Ejecución — Ruta A (oficial, sin Docker)
 
+Desde la raíz del repositorio con un solo comando (con `uv`):
+
+```bash
+uv run --directory backend uvicorn solver.main:app
+# → http://127.0.0.1:8000
+```
+
+O desde la carpeta `backend/`:
+
 ```bash
 cd backend
 uv sync
 uv run uvicorn solver.main:app
-# → http://127.0.0.1:8000
 ```
 
-Con `frontend/dist` presente, el backend sirve la app completa (un solo
-comando, un solo puerto). Para generarlo una vez:
+Con `frontend/dist` presente (precompilado y commiteado en los tags de entrega),
+el backend sirve la app completa (SPA estática + API) en un solo comando y un
+solo puerto (**http://127.0.0.1:8000**), **sin requerir Node.js**.
+
+Para compilar `frontend/dist` en desarrollo (requiere Node):
 
 ```bash
 cd frontend && npm ci && npm run build
@@ -63,7 +74,7 @@ uno infactible).
 - Datos nunca escritos en el código → todo entra por la API/UI; ejemplos en JSON.
 - Sin librerías que resuelvan el problema → motor propio en `engine/`.
 - Paso a paso + casos especiales → `docs/contracts.md` (§2, §3).
-- Verificación aparte (Excel Solver) → informe en `docs/informe/`.
+- Verificación aparte (Excel Solver) → [informe en docs/informe/informe-comparativo.md](docs/informe/informe-comparativo.md).
 - Declaración de uso de IA → informe final.
 
 ## Flujo de trabajo
@@ -97,4 +108,4 @@ git tag entrega-N && git push origin main --tags
 
 ## Equipo
 
-Daniel Chavarro (P1) · Jorge Méndez (P2) · Nicolás Velazco (P3) · [P4 por confirmar]
+Daniel Chavarro (P1) · Jorge Méndez (P2) · Nicolás Velazco (P3) · Santiago Vargas (P4)
