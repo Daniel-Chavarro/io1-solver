@@ -6,6 +6,7 @@ import { MethodTabs, type TabId } from "./components/MethodTabs";
 import { ProblemForm, BLANK_DRAFT } from "./components/ProblemForm";
 import { ErrorBanner } from "./components/ErrorBanner";
 import { SolutionSummary } from "./components/SolutionSummary";
+import { SensitivityPanel } from "./components/SensitivityPanel";
 import { SpecialCasesPanel } from "./components/SpecialCasesPanel";
 import { Stepper } from "./components/Stepper";
 
@@ -100,16 +101,33 @@ export default function App() {
           </section>
         )}
 
-        {tab === "sensibilidad" && (
-          <section className="sheet space-y-2 p-6">
-            <h2 className="font-display text-xl font-semibold">Sensibilidad</h2>
-            <p className="max-w-xl text-sm text-ink-soft">
-              Precios sombra, costos reducidos y rangos de c<sub>j</sub> y
-              b<sub>i</sub> sobre el problema resuelto, con su interpretación.
-              Disponible en la entrega final.
-            </p>
-          </section>
-        )}
+        {tab === "sensibilidad" &&
+          (solved?.result.status === "optimal" ? (
+            <SensitivityPanel
+              key={solveId}
+              problem={solved.problem}
+              method={solved.method}
+            />
+          ) : (
+            <section className="sheet space-y-2 p-6">
+              <h2 className="font-display text-xl font-semibold">Sensibilidad</h2>
+              <p className="max-w-xl text-sm text-ink-soft">
+                {solved
+                  ? "El último problema no llegó a una solución óptima (es no acotado o infactible), así que no hay tabla óptima sobre la cual analizar sensibilidad."
+                  : "Primero resuelve un problema en la pestaña Resolver. Aquí verás sus precios sombra, costos reducidos y los rangos de cj y bi, con su interpretación."}
+              </p>
+              <button
+                type="button"
+                className="btn btn-quiet"
+                onClick={() => {
+                  setTab("resolver");
+                  setEditing(true);
+                }}
+              >
+                Ir a Resolver
+              </button>
+            </section>
+          ))}
       </main>
 
       <footer className="mx-auto max-w-6xl px-4 pb-10 text-xs text-ink-soft sm:px-6">

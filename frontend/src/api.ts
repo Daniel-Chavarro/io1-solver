@@ -1,7 +1,7 @@
 // Thin fetch wrappers over the FastAPI backend (docs/contracts.md section 5).
 // 422 bodies arrive either as {code, message} (Pydantic handler) or as
 // FastAPI's {detail} (HTTPException); both are surfaced as-is in Spanish.
-import type { ExampleSummary, MethodResult, Problem } from "./types";
+import type { ExampleSummary, MethodResult, Problem, SensitivityReport } from "./types";
 
 export class ApiError extends Error {
   constructor(
@@ -56,7 +56,7 @@ export const resolver = (method: string, problem: Problem) =>
   call<MethodResult>("/api/resolver", { method, problem });
 
 export const sensibilidad = (method: string, problem: Problem) =>
-  call<unknown>("/api/sensibilidad", { method, problem });
+  call<SensitivityReport>("/api/sensibilidad", { method, problem });
 
 export const comparar = (problem: Problem) =>
   call<unknown>("/api/comparar", { problem });
