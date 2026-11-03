@@ -155,7 +155,6 @@ def comparar(req: ComparisonRequest):
 
 
 # Serve the built frontend (README ruta A). Needs frontend/dist (npm run build).
-<<<<<<< HEAD
 _dist = Path(
     os.environ.get(
         "SOLVER_FRONTEND_DIST",
@@ -163,8 +162,4 @@ _dist = Path(
     )
 )
 if _dist.is_dir():
-=======
-_dist = Path(__file__).resolve().parents[3] / "frontend" / "dist"
-if _dist.exists():
->>>>>>> origin/main
     app.mount("/", StaticFiles(directory=_dist, html=True), name="frontend")
