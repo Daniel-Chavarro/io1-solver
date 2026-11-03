@@ -159,5 +159,5 @@ _dist = Path(
         Path(__file__).resolve().parents[3] / "frontend" / "dist",
     )
 )
-if _dist.exists():
+if _dist.is_dir():
     app.mount("/", StaticFiles(directory=_dist, html=True), name="frontend")
