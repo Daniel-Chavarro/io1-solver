@@ -133,7 +133,7 @@ def test_api_unbounded_and_infeasible_are_422():
 
 def test_api_simplex_with_ge_is_method_not_admissible():
     r = client.post("/api/sensibilidad",
-                    json={"method": "simplex", "problem": _example("bakery-real")})
+                    json={"method": "simplex", "problem": _example("test-infeasible")})
     assert r.status_code == 422
     assert r.json()["code"] == "METHOD_NOT_ADMISSIBLE"
 
@@ -145,3 +145,12 @@ def test_api_bakery_real_big_m_returns_report():
     body = r.json()
     n_cons = len(_example("bakery-real")["constraints"])
     assert len(body["shadow_prices"]) == len(body["rhs_ranges"]) == n_cons
+
+
+def test_api_bakery_real_simplex_matches_big_m_sensitivity():
+    problem = _example("bakery-real")
+    r_s = client.post("/api/sensibilidad", json={"method": "simplex", "problem": problem})
+    r_m = client.post("/api/sensibilidad", json={"method": "big_m", "problem": problem})
+    assert r_s.status_code == 200
+    assert r_m.status_code == 200
+    assert r_s.json() == r_m.json()

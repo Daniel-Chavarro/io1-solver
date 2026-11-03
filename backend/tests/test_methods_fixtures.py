@@ -112,10 +112,6 @@ def test_bakery_real_simplex_equivalent_transform_matches_big_m():
     assert uses_equivalent_transform(problem_g1) is False
     assert REGISTRY["simplex"].run(problem_g1).special_cases == []
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="sensitivity.analyze is still a stub (POST /api/sensibilidad returns 501)",
-)
 def test_simplex_grupo1_shadow_prices_match_pdf():
     problem = _load("simplex-grupo1")["problem"]
     body = TestClient(app).post(
@@ -141,9 +137,10 @@ def test_comparar_contract_on_examples(example_id):
         assert res.results["simplex"].status == "optimal"
         assert res.results["big_m"].status == "optimal"
     elif example_id == "bakery-real":
-        assert res.same_objective is None
-        assert res.results["simplex"].status == "not_admissible"
+        assert res.same_objective is True
+        assert res.results["simplex"].status == "optimal"
         assert res.results["big_m"].status == "optimal"
+        assert "Simplex usó transformación al problema equivalente" in res.verdict
     elif example_id == "test-unbounded":
         assert res.results["simplex"].status == "unbounded"
         assert res.results["big_m"].status == "unbounded"

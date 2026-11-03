@@ -42,8 +42,14 @@ def _constraint_columns(problem: Problem, method: Method):
     Mirrors the naming in SimplexMethod.build / BigMMethod.build.
     """
     if method.id != "big_m":
-        return [(f"s{i + 1}", f"s{i + 1}", False) for i in range(len(problem.constraints))]
-
+        return [
+            (
+                f"s{i + 1}",
+                f"s{i + 1}",
+                constraint.op == ">=" or _frac(constraint.rhs) < 0,
+            )
+            for i, constraint in enumerate(problem.constraints)
+        ]
     out = []
     n_s = n_e = n_a = 0
     for constraint in problem.constraints:
@@ -85,7 +91,11 @@ def analyze(problem: Problem, method: Method) -> SensitivityReport:
             f"(el estado actual es '{method_result.status}')."
         )
 
-    final = engine_result.final
+    final = (
+        method.restore_tableau(engine_result.final, problem)
+        if hasattr(method, "restore_tableau")
+        else engine_result.final
+    )
     sense = problem.objective.sense
     n_vars = len(problem.variables)
     columns = final.columns
