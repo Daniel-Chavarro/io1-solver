@@ -1,7 +1,7 @@
 {
   "id": "bakery-real",
   "name": "Plan de producción — café empacado (Procafecol)",
-  "description": "Caso real del grupo: plan mensual de 5 líneas de café empacado de Procafecol S.A. (docs: Entrega 1, sección 6). Las cotas de las variables se modelan como restricciones. Contiene restricciones >=, por eso solo lo resuelve Gran M.",
+  "description": "Caso real del grupo: plan mensual de 5 líneas de café empacado de Procafecol S.A. (docs: Entrega 1, sección 6). Las cotas de las variables se modelan como restricciones. Contiene restricciones >=, que Gran M resuelve con variables artificiales y Simplex resuelve mediante transformación equivalente por cambio de variables.",
   "kind": "real",
   "problem": {
     "name": "Plan de producción mensual — café empacado",
@@ -198,8 +198,8 @@
   },
   "expected": {
     "simplex": {
-      "status": "not_admissible",
-      "admissible": false
+      "status": "optimal",
+      "objective_value": "135857/36"
     },
     "big_m": {
       "status": "optimal",

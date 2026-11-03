@@ -6,6 +6,15 @@ import { METHOD_NAMES } from "../types";
 export function SolutionSummary({ result }: { result: MethodResult }) {
   const sense = result.objective.sense === "max" ? "máximo" : "mínimo";
   const methodName = METHOD_NAMES[result.method] ?? result.method;
+  const usedEquivalentTransform =
+    result.method === "simplex" &&
+    result.special_cases.some((c) => c.type === "normalized_constraint");
+  const methodDetail =
+    result.method === "simplex"
+      ? usedEquivalentTransform
+        ? "Simplex (usando transformación al problema equivalente por cambio de variables)"
+        : "Simplex (forma estándar directa, sin transformación equivalente)"
+      : methodName;
   if (result.status === "optimal") {
     return (
       <section className="space-y-3" aria-label="Solución">
@@ -32,7 +41,7 @@ export function SolutionSummary({ result }: { result: MethodResult }) {
           )}
         </div>
         <p className="text-xs text-ink-soft">
-          Resuelto con {methodName} en {result.elapsed_ms} ms.
+          Resuelto con {methodDetail} en {result.elapsed_ms} ms.
         </p>
       </section>
     );

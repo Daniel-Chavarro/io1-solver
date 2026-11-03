@@ -189,8 +189,29 @@ def test_comparar_both_optimal_reports_metrics_and_same_objective():
         assert isinstance(summary["elapsed_ms"], (int, float)) and summary["elapsed_ms"] >= 0
 
 
-def test_comparar_not_admissible_for_simplex_is_status_not_error():
+def test_comparar_bakery_real_uses_equivalent_transform_and_matches_big_m():
     problem = client.get("/api/ejemplos/bakery-real").json()["problem"]
+    r = client.post("/api/comparar", json={"problem": problem})
+    assert r.status_code == 200
+    body = r.json()
+    assert body["same_objective"] is True
+    assert "Simplex usó transformación al problema equivalente" in body["verdict"]
+
+    s_sum = body["results"]["simplex"]
+    assert s_sum["status"] == "optimal"
+    assert s_sum["iterations"] == 5
+    assert s_sum["tableau_shape"] == "13x19"
+    assert isinstance(s_sum["elapsed_ms"], (int, float)) and s_sum["elapsed_ms"] >= 0
+
+    b_sum = body["results"]["big_m"]
+    assert b_sum["status"] == "optimal"
+    assert b_sum["iterations"] == 10
+    assert b_sum["tableau_shape"] == "13x24"
+    assert isinstance(b_sum["elapsed_ms"], (int, float)) and b_sum["elapsed_ms"] >= 0
+
+
+def test_comparar_not_admissible_for_simplex_is_status_not_error():
+    problem = _problem(constraints=[{"name": "c1", "coefficients": ["1"], "op": "=", "rhs": "5"}])
     r = client.post("/api/comparar", json={"problem": problem})
     assert r.status_code == 200
     body = r.json()
@@ -205,10 +226,7 @@ def test_comparar_not_admissible_for_simplex_is_status_not_error():
     big_m = body["results"]["big_m"]
     assert big_m["status"] == "optimal"
     assert big_m["iterations"] > 0
-    assert big_m["tableau_shape"] == "13x24"
     assert isinstance(big_m["elapsed_ms"], (int, float)) and big_m["elapsed_ms"] >= 0
-    assert "135857/36" in body["verdict"]
-
 
 def test_comparar_infeasible_and_unbounded_cases():
     infeasible = client.get("/api/ejemplos/test-infeasible").json()["problem"]

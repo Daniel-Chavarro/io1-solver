@@ -5,3 +5,4 @@ En este directorio se consolidan los informes técnicos de cambios, decisiones d
 ## Documentos disponibles
 
 - [**Motor Simplex (`engine-simplex.md`)**](./engine-simplex.md): Documentación detallada de los cambios implementados en la rama `engine` (`frac_m.py`, `tableau.py`, `solver.py`), comparativa exhaustiva frente a `docs/contracts.md` y resultados de la suite de pruebas.
+- [**Transformación al Problema Equivalente para Simplex (`transformacion-problema-equivalente.md`)**](./transformacion-problema-equivalente.md): Documentación matemática y comparativa del lineamiento del curso *"¿Mismo problema?: Sí"*, deducción del cambio afín de variables ($\mathbf{x} = \mathbf{x}^0 + \mathbf{T}\mathbf{y}$), aplicación al caso real de Procafecol S.A. y comparación exhaustiva Simplex vs. Gran M.

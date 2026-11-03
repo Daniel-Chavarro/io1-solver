@@ -13,6 +13,7 @@ from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from .methods import REGISTRY, MethodNotAdmissibleError
+from .methods.simplex import uses_equivalent_transform
 from .schemas import Comparison, ComparisonRequest, MethodSummary, Problem, ResolverRequest, SensitivityRequest
 from .sensitivity import SensitivityNotAvailableError, analyze
 
@@ -184,6 +185,7 @@ def _comparison_verdict(
     results: dict[str, MethodSummary],
     z_values: dict[str, str],
     same_objective: bool | None,
+    used_transform: bool = False,
 ) -> str:
     s = results.get("simplex")
     b = results.get("big_m")
@@ -194,17 +196,18 @@ def _comparison_verdict(
         z_s = z_values.get("simplex", "")
         z_b = z_values.get("big_m", "")
         if same_objective:
-            if s.iterations == b.iterations and s.tableau_shape == b.tableau_shape:
+            if not used_transform:
                 return (
                     f"Ambos métodos alcanzaron el mismo óptimo (Z = {z_s}) en "
-                    f"{s.iterations} tablas ({s.tableau_shape}); como todas las "
-                    f"restricciones son ≤ con lado derecho no negativo, Gran M no "
-                    f"requirió variables artificiales y conviene Simplex por simplicidad."
+                    f"{s.iterations} tablas ({s.tableau_shape}); no se requirió transformación "
+                    f"al problema equivalente (todas las restricciones son ≤ con RHS ≥ 0) y "
+                    f"Gran M no requirió variables artificiales, por lo que conviene Simplex por simplicidad."
                 )
             return (
                 f"Ambos métodos alcanzaron el mismo óptimo (Z = {z_s}): "
-                f"Simplex usó {s.iterations} tablas ({s.tableau_shape}, {s.elapsed_ms} ms) y "
-                f"Gran M usó {b.iterations} tablas ({b.tableau_shape}, {b.elapsed_ms} ms)."
+                f"Simplex usó transformación al problema equivalente por cambio de variables "
+                f"en {s.iterations} tablas ({s.tableau_shape}, {s.elapsed_ms} ms) y "
+                f"Gran M usó variables artificiales en {b.iterations} tablas ({b.tableau_shape}, {b.elapsed_ms} ms)."
             )
         return (
             f"Ambos métodos terminaron como óptimos pero con distinto valor de Z "
@@ -215,9 +218,9 @@ def _comparison_verdict(
         if b.status == "optimal":
             z_b = z_values.get("big_m", "")
             return (
-                f"Simplex estándar no es admisible porque el problema tiene "
-                f"restricciones ≥, = o lados derechos negativos; Gran M lo resolvió "
-                f"hasta el óptimo (Z = {z_b}) en {b.iterations} tablas ({b.tableau_shape})."
+                f"No fue posible aplicar transformación al problema equivalente en Simplex estándar "
+                f"(por igualdades '=', lados derechos negativos o cotas incompatibles); "
+                f"Gran M lo resolvió hasta el óptimo (Z = {z_b}) en {b.iterations} tablas ({b.tableau_shape})."
             )
         if b.status == "infeasible":
             return (
@@ -268,13 +271,15 @@ def comparar(req: ComparisonRequest):
             results[method_id] = MethodSummary(method=method_id, status="not_admissible")
 
     same = None
-    if len(results) == 2 and all(r.status == "optimal" for r in results.values()):
-        vals = list(z_values.values())
-        same = len(vals) == 2 and vals[0] == vals[1]
+    optimal_vals = [z_values[m] for m, r in results.items() if r.status == "optimal" and m in z_values]
+    active_results = [r for r in results.values() if r.status not in ("not_implemented", "not_admissible")]
+    if len(optimal_vals) >= 2 and len(optimal_vals) == len(active_results):
+        same = len(set(optimal_vals)) == 1
+    used_transform = uses_equivalent_transform(req.problem)
     return Comparison(
         results=results,
         same_objective=same,
-        verdict=_comparison_verdict(results, z_values, same))
+        verdict=_comparison_verdict(results, z_values, same, used_transform=used_transform))
 
 
 # Serve the built frontend (README ruta A). Needs frontend/dist (npm run build).
