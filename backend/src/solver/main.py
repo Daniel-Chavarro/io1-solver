@@ -13,6 +13,7 @@ from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from .methods import REGISTRY, MethodNotAdmissibleError
+from .methods.simplex import uses_equivalent_transform
 from .schemas import Comparison, ComparisonRequest, MethodSummary, Problem, ResolverRequest, SensitivityRequest
 from .sensitivity import SensitivityNotAvailableError, analyze
 
@@ -117,9 +118,16 @@ def _comparison_verdict(
     results: dict[str, MethodSummary],
     z_values: dict[str, str],
     same_objective: bool | None,
+    used_transform: bool = False,
 ) -> str:
+    if any(r.status == "unbounded" for r in results.values()):
+        return "El problema no está acotado."
+    if any(r.status == "infeasible" for r in results.values()):
+        return "El problema no tiene solución factible (infactible)."
+
     s = results.get("simplex")
     b = results.get("big_m")
+    d = results.get("dual_simplex")
     if s is None or b is None:
         return "Comparación disponible cuando ambos métodos estén registrados."
 
@@ -127,17 +135,18 @@ def _comparison_verdict(
         z_s = z_values.get("simplex", "")
         z_b = z_values.get("big_m", "")
         if same_objective:
-            if s.iterations == b.iterations and s.tableau_shape == b.tableau_shape:
+            if not used_transform:
                 return (
                     f"Ambos métodos alcanzaron el mismo óptimo (Z = {z_s}) en "
-                    f"{s.iterations} tablas ({s.tableau_shape}); como todas las "
-                    f"restricciones son ≤ con lado derecho no negativo, Gran M no "
-                    f"requirió variables artificiales y conviene Simplex por simplicidad."
+                    f"{s.iterations} tablas ({s.tableau_shape}); no se requirió transformación "
+                    f"al problema equivalente (todas las restricciones son ≤ con RHS ≥ 0) y "
+                    f"Gran M no requirió variables artificiales, por lo que conviene Simplex por simplicidad."
                 )
             return (
                 f"Ambos métodos alcanzaron el mismo óptimo (Z = {z_s}): "
-                f"Simplex usó {s.iterations} tablas ({s.tableau_shape}, {s.elapsed_ms} ms) y "
-                f"Gran M usó {b.iterations} tablas ({b.tableau_shape}, {b.elapsed_ms} ms)."
+                f"Simplex usó transformación al problema equivalente por cambio de variables "
+                f"en {s.iterations} tablas ({s.tableau_shape}, {s.elapsed_ms} ms) y "
+                f"Gran M usó variables artificiales en {b.iterations} tablas ({b.tableau_shape}, {b.elapsed_ms} ms)."
             )
         return (
             f"Ambos métodos terminaron como óptimos pero con distinto valor de Z "
@@ -147,10 +156,12 @@ def _comparison_verdict(
     if s.status == "not_admissible":
         if b.status == "optimal":
             z_b = z_values.get("big_m", "")
+            if d and d.status == "optimal":
+                return f"El problema no está en forma estándar para Simplex; Gran M y Simplex Dual convergen a la misma solución óptima (Z = {z_b})."
             return (
-                f"Simplex estándar no es admisible porque el problema tiene "
-                f"restricciones ≥, = o lados derechos negativos; Gran M lo resolvió "
-                f"hasta el óptimo (Z = {z_b}) en {b.iterations} tablas ({b.tableau_shape})."
+                f"No fue posible aplicar transformación al problema equivalente en Simplex estándar "
+                f"(por igualdades '=', lados derechos negativos o cotas incompatibles); "
+                f"Gran M lo resolvió hasta el óptimo (Z = {z_b}) en {b.iterations} tablas ({b.tableau_shape})."
             )
         if b.status == "infeasible":
             return (
@@ -163,21 +174,7 @@ def _comparison_verdict(
                 f"determinó que el problema no está acotado tras {b.iterations} tablas."
             )
 
-    if s.status == "unbounded" and b.status == "unbounded":
-        return (
-            f"Ambos métodos determinaron que el problema no está acotado "
-            f"(Simplex en {s.iterations} tablas y Gran M en {b.iterations} tablas)."
-        )
-
-    if s.status == "infeasible" and b.status == "infeasible":
-        return (
-            f"Ambos métodos determinaron que el problema es infactible "
-            f"(Simplex en {s.iterations} tablas y Gran M en {b.iterations} tablas)."
-        )
-
-    return (
-        f"Simplex terminó con estado '{s.status}' y Gran M con estado '{b.status}'."
-    )
+    return "Comparación completada."
 
 
 @app.post("/api/comparar")
@@ -199,15 +196,16 @@ def comparar(req: ComparisonRequest):
             results[method_id] = MethodSummary(method=method_id, status="not_implemented")
         except MethodNotAdmissibleError:
             results[method_id] = MethodSummary(method=method_id, status="not_admissible")
-
     same = None
-    if len(results) == 2 and all(r.status == "optimal" for r in results.values()):
-        vals = list(z_values.values())
-        same = len(vals) == 2 and vals[0] == vals[1]
+    optimal_vals = [z_values[m] for m, r in results.items() if r.status == "optimal" and m in z_values]
+    if len(optimal_vals) == len(results):
+        same = len(set(optimal_vals)) == 1
+    used_transform = uses_equivalent_transform(req.problem)
     return Comparison(
         results=results,
         same_objective=same,
-        verdict=_comparison_verdict(results, z_values, same))
+        verdict=_comparison_verdict(results, z_values, same, used_transform=used_transform),
+    )
 
 
 # Serve the built frontend (README ruta A). Needs frontend/dist (npm run build).

@@ -28,7 +28,7 @@ const STATUS_META: Record<string, { label: string; tone: Tone }> = {
   not_implemented: { label: "No implementado", tone: "rule" },
 };
 
-const METHOD_ORDER = ["simplex", "big_m"];
+const METHOD_ORDER = ["simplex", "big_m", "dual_simplex"];
 
 export function ComparisonPanel({ problem }: Props) {
   const [load, setLoad] = useState<Load>({ state: "loading" });

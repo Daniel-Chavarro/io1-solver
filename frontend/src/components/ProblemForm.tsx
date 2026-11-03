@@ -38,8 +38,10 @@ const OPS: { value: Op; label: string }[] = [
 
 const METHOD_HINT: Record<MethodId, string> = {
   simplex:
-    "Simplex solo admite restricciones ≤ con lado derecho no negativo; para ≥ o = usa Gran M.",
+    "Simplex resuelve en forma estándar directa (≤ con RHS ≥ 0) o aplica transformación al problema equivalente por cambio de variables para restricciones ≥ con cota inferior factible; se indica en el resultado si la transformación fue usada o no.",
   big_m: "Gran M admite restricciones ≤, ≥ y =; la penalización M queda visible en las tablas.",
+  dual_simplex:
+    "Simplex Dual admite restricciones ≤, ≥ y = sin variables artificiales; pivotea primero lados derechos negativos y luego optimiza.",
 };
 
 function FieldError({ message }: { message?: string }) {
@@ -345,7 +347,7 @@ export function ProblemForm({
           role="radiogroup"
           aria-label="Método"
         >
-          {(["simplex", "big_m"] as const).map((m) => (
+          {(["simplex", "big_m", "dual_simplex"] as const).map((m) => (
             <button
               key={m}
               type="button"

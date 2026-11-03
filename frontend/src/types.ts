@@ -2,11 +2,12 @@
 // always decimal strings rendered as-is; the frontend never computes.
 export type Sense = "max" | "min";
 export type Op = "<=" | ">=" | "=";
-export type MethodId = "simplex" | "big_m";
+export type MethodId = "simplex" | "big_m" | "dual_simplex";
 
 export const METHOD_NAMES: Record<string, string> = {
   simplex: "Simplex",
   big_m: "Gran M",
+  dual_simplex: "Simplex Dual",
 };
 export interface Variable { name: string; unit: string }
 export interface Constraint { name: string; coefficients: string[]; op: Op; rhs: string }
