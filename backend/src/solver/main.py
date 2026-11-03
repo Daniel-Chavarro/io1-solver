@@ -114,6 +114,7 @@ def sensibilidad(req: SensitivityRequest):
 @app.post("/api/comparar")
 def comparar(req: ComparisonRequest):
     results: dict[str, MethodSummary] = {}
+    obj_values: dict[str, str] = {}
     for method_id, method in REGISTRY.items():
         t0 = time.perf_counter()
         try:
@@ -123,19 +124,40 @@ def comparar(req: ComparisonRequest):
                 iterations=len(res.iterations),
                 elapsed_ms=round((time.perf_counter() - t0) * 1000, 3),
                 tableau_shape=f"{len(res.final_table.rows)}x{len(res.final_table.columns)}")
+            if res.status == "optimal":
+                obj_values[method_id] = str(res.objective.get("value", ""))
         except NotImplementedError:
             results[method_id] = MethodSummary(method=method_id, status="not_implemented")
         except MethodNotAdmissibleError:
             results[method_id] = MethodSummary(method=method_id, status="not_admissible")
+
     same = None
     if len(results) == 2 and all(r.status == "optimal" for r in results.values()):
-        same = True  # TODO(P1): compare z values across methods, not just status
+        same = obj_values.get("simplex") == obj_values.get("big_m")
+        if same:
+            verdict = f"Ambos métodos convergen a la misma solución óptima (Z = {obj_values.get('simplex')})."
+        else:
+            verdict = "Ambos métodos son admisibles pero difieren en el valor óptimo."
+    elif results.get("simplex") and results["simplex"].status == "not_admissible" and results.get("big_m") and results["big_m"].status == "optimal":
+        verdict = "El problema contiene restricciones >= o =, por lo que solo es admisible para Gran M."
+    elif any(r.status == "unbounded" for r in results.values()):
+        verdict = "El problema no está acotado."
+    elif any(r.status == "infeasible" for r in results.values()):
+        verdict = "El problema no tiene solución factible (infactible)."
+    else:
+        verdict = "Comparación completada."
+
     return Comparison(
         results=results, same_objective=same,
-        verdict="Comparacion completa cuando ambos metodos esten implementados")
+        verdict=verdict)
 
 
 # Serve the built frontend (README ruta A). Needs frontend/dist (npm run build).
-_dist = Path(__file__).resolve().parents[3] / "frontend" / "dist"
-if _dist.exists():
+_dist = Path(
+    os.environ.get(
+        "SOLVER_FRONTEND_DIST",
+        Path(__file__).resolve().parents[3] / "frontend" / "dist",
+    )
+)
+if _dist.is_dir():
     app.mount("/", StaticFiles(directory=_dist, html=True), name="frontend")
