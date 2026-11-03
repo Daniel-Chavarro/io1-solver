@@ -6,6 +6,7 @@ import { MethodTabs, type TabId } from "./components/MethodTabs";
 import { ProblemForm, BLANK_DRAFT } from "./components/ProblemForm";
 import { ErrorBanner } from "./components/ErrorBanner";
 import { SolutionSummary } from "./components/SolutionSummary";
+import { ComparisonPanel } from "./components/ComparisonPanel";
 import { SensitivityPanel } from "./components/SensitivityPanel";
 import { SpecialCasesPanel } from "./components/SpecialCasesPanel";
 import { Stepper } from "./components/Stepper";
@@ -91,15 +92,30 @@ export default function App() {
           </div>
         )}
 
-        {tab === "comparar" && (
-          <section className="sheet space-y-2 p-6">
-            <h2 className="font-display text-xl font-semibold">Comparación</h2>
-            <p className="max-w-xl text-sm text-ink-soft">
-              Correrá Simplex y Gran M sobre el mismo problema y comparará
-              iteraciones, tiempo y valor de Z. Disponible en la entrega final.
-            </p>
-          </section>
-        )}
+        {tab === "comparar" &&
+          (solved ? (
+            <ComparisonPanel key={solveId} problem={solved.problem} />
+          ) : (
+            <section className="sheet space-y-2 p-6">
+              <h2 className="font-display text-xl font-semibold">Comparación</h2>
+              <p className="max-w-xl text-sm text-ink-soft">
+                Primero resuelve un problema en la pestaña Resolver. Aquí se
+                ejecutarán Simplex y Gran M sobre ese mismo problema para
+                comparar estado, número de tablas, tamaño del tableau, tiempo y
+                si ambos llegan al mismo valor óptimo de Z.
+              </p>
+              <button
+                type="button"
+                className="btn btn-quiet"
+                onClick={() => {
+                  setTab("resolver");
+                  setEditing(true);
+                }}
+              >
+                Ir a Resolver
+              </button>
+            </section>
+          ))}
 
         {tab === "sensibilidad" &&
           (solved?.result.status === "optimal" ? (
