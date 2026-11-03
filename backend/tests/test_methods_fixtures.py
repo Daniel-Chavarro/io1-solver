@@ -82,10 +82,6 @@ def test_bakery_real_big_m_respects_all_bounds():
     assert sum(c * x[n] for c, n in zip(coefs, names)) == Fraction(result.objective["value"])
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="sensitivity.analyze is still a stub (POST /api/sensibilidad returns 501)",
-)
 def test_simplex_grupo1_shadow_prices_match_pdf():
     problem = _load("simplex-grupo1")["problem"]
     body = TestClient(app).post(
