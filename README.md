@@ -20,8 +20,15 @@ docs/       contracts.md (contratos de API) + informe/informe-comparativo.md
 El contrato de cada módulo (qué recibe, qué devuelve, casos especiales) está
 en **`docs/contracts.md`**.
 
-## Ejecución — Ruta A (oficial, sin Docker)
+## Opciones de ejecución
 
+Puedes levantar el proyecto de dos formas:
+1. **Ruta A (local con `uv`, recomendada/oficial)**: todo en un solo puerto y sin contenedor.
+2. **Ruta B (con Docker Compose)**: alternativa contenerizada para levantar frontend y backend en servicios separados sin configurar entornos locales.
+
+---
+
+### Ruta A — Local sin Docker (oficial)
 Desde la raíz del repositorio con un solo comando (con `uv`):
 
 ```bash
@@ -47,17 +54,29 @@ Para compilar `frontend/dist` en desarrollo (requiere Node):
 cd frontend && npm ci && npm run build
 ```
 
+### Ruta B — Alternativa con Docker Compose
+
+Si prefieres no instalar `uv` ni `Node.js` localmente, puedes levantar la aplicación completa en contenedores con Docker Compose:
+
+```bash
+docker compose up --build
+```
+
+Una vez levantado:
+- **Frontend (UI)**: [http://localhost:5173](http://localhost:5173)
+- **Backend (API / Docs)**: [http://localhost:8000](http://localhost:8000) (salud en `/health`, docs en `/docs`)
+
+Para detener los servicios:
+```bash
+docker compose down
+```
+
+---
+
 ## Desarrollo (dos terminales)
 
 - Backend: `cd backend && uv run uvicorn solver.main:app --reload`
 - Frontend: `cd frontend && npm run dev` (proxy de `/api` → `:8000`)
-
-## Ruta B — Docker Compose
-
-```bash
-docker compose up --build
-# frontend: http://localhost:5173 · API: http://localhost:8000/health
-```
 
 ## Tests
 
