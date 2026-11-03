@@ -92,3 +92,29 @@ def test_simplex_grupo1_shadow_prices_match_pdf():
         "vCPU": ("10", True), "RAM": ("5", True),
         "SSD": ("5", True), "Licencias BD": ("0", False),
     }
+
+@pytest.mark.parametrize("example_id", ["bakery-real", "simplex-grupo1", "test-unbounded", "test-infeasible"])
+def test_comparar_contract_on_examples(example_id):
+    from solver.main import comparar
+    from solver.schemas import ComparisonRequest
+
+    problem = Problem(**_load(example_id)["problem"])
+    res = comparar(ComparisonRequest(problem=problem))
+    assert "simplex" in res.results
+    assert "big_m" in res.results
+    assert res.verdict != ""
+    if example_id == "simplex-grupo1":
+        assert res.same_objective is True
+        assert res.results["simplex"].status == "optimal"
+        assert res.results["big_m"].status == "optimal"
+    elif example_id == "bakery-real":
+        assert res.same_objective is None
+        assert res.results["simplex"].status == "not_admissible"
+        assert res.results["big_m"].status == "optimal"
+    elif example_id == "test-unbounded":
+        assert res.results["simplex"].status == "unbounded"
+        assert res.results["big_m"].status == "unbounded"
+    elif example_id == "test-infeasible":
+        assert res.results["simplex"].status == "not_admissible"
+        assert res.results["big_m"].status == "infeasible"
+
