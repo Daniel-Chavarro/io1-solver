@@ -2,11 +2,12 @@
 // always decimal strings rendered as-is; the frontend never computes.
 export type Sense = "max" | "min";
 export type Op = "<=" | ">=" | "=";
-export type MethodId = "simplex" | "big_m";
+export type MethodId = "simplex" | "big_m" | "dual_simplex";
 
 export const METHOD_NAMES: Record<string, string> = {
   simplex: "Simplex",
   big_m: "Gran M",
+  dual_simplex: "Simplex Dual",
 };
 export interface Variable { name: string; unit: string }
 export interface Constraint { name: string; coefficients: string[]; op: Op; rhs: string }
@@ -72,4 +73,19 @@ export interface SensitivityReport {
   reduced_costs: ReducedCost[];
   objective_ranges: ObjRange[];
   rhs_ranges: RhsRange[];
+}
+
+// Comparación (docs/contracts.md §5).
+export interface MethodSummary {
+  method: string;
+  status: string;
+  iterations: number | null;
+  elapsed_ms: number | null;
+  tableau_shape: string | null;
+}
+
+export interface Comparison {
+  results: Record<string, MethodSummary>;
+  same_objective: boolean | null;
+  verdict: string;
 }

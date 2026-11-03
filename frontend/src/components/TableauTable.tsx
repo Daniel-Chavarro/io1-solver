@@ -36,21 +36,28 @@ export function TableauTable({ tableau, entering, leaving, ratios, ties }: Props
   const varCols = tableau.columns.slice(0, -1); // the last column is b_j
   const n = varCols.length;
   const enteringIdx = entering ? varCols.indexOf(entering) : -1;
-  const showRatios = !!ratios && ratios.length > 0;
+  const leavingRow = leaving
+    ? tableau.rows.find((r) => r.basic === leaving)
+    : undefined;
+  const isDualStep =
+    !!leavingRow &&
+    leavingRow.cells[leavingRow.cells.length - 1]?.startsWith("-") === true;
+  const showRowRatios = !isDualStep && !!ratios && ratios.length > 0;
+  const showColRatios = isDualStep && !!ratios && ratios.length > 0;
   const tiedRows = new Set(ties ?? []);
 
   const stickyBg = (tint: boolean) => (tint ? "bg-rule-wash" : "bg-paper");
   const tintBg = (tint: boolean) => (tint ? "bg-rule-wash" : "");
-  const pinB = showRatios ? "" : "sticky right-0 z-10 ";
-  const pinR = showRatios ? "sticky right-0 z-10 " : "";
+  const pinB = showRowRatios ? "" : "sticky right-0 z-10 ";
+  const pinR = showRowRatios ? "sticky right-0 z-10 " : "";
 
   const vbPin = "sticky left-0 z-10 w-14 min-w-14 ";
   const cbPin = "sticky left-14 z-10 ";
   const label = "whitespace-nowrap px-3 py-1.5 text-center italic";
 
   const blankVB = <td className={`${vbPin}bg-paper`} />;
-  const blankB = <td className={`${pinB}${showRatios ? "" : "bg-paper"}`} />;
-  const blankR = showRatios ? <td className={`${pinR}bg-paper`} /> : null;
+  const blankB = <td className={`${pinB}${showRowRatios ? "" : "bg-paper"}`} />;
+  const blankR = showRowRatios ? <td className={`${pinR}bg-paper`} /> : null;
 
   return (
     <div className="overflow-x-auto rounded-md border border-rule/70 bg-paper p-2">
@@ -91,7 +98,14 @@ export function TableauTable({ tableau, entering, leaving, ratios, ties }: Props
                 scope="col"
                 className={`${box(false, false)} ${tintBg(j === enteringIdx)} whitespace-nowrap px-3 py-1.5 text-center font-normal italic`}
               >
-                <Name text={col} />
+                <span className="inline-flex items-center gap-1.5">
+                  <Name text={col} />
+                  {isDualStep && tiedRows.has(col) && (
+                    <span className="rounded-sm bg-warn-wash px-1 py-px font-sans text-[10px] font-medium not-italic text-warn">
+                      empate
+                    </span>
+                  )}
+                </span>
               </th>
             ))}
             <th
@@ -100,7 +114,7 @@ export function TableauTable({ tableau, entering, leaving, ratios, ties }: Props
             >
               b<sub>j</sub>
             </th>
-            {showRatios && (
+            {showRowRatios && (
               <th
                 scope="col"
                 className={`${pinR}${box(true, false)} bg-paper whitespace-nowrap px-3 py-1.5 text-center font-sans text-xs font-medium not-italic text-ink-soft`}
@@ -125,7 +139,7 @@ export function TableauTable({ tableau, entering, leaving, ratios, ties }: Props
                     <span>
                       <Name text={row.basic} />
                     </span>
-                    {tiedRows.has(row.basic) && (
+                    {!isDualStep && tiedRows.has(row.basic) && (
                       <span className="rounded-sm bg-warn-wash px-1 py-px font-sans text-[10px] font-medium not-italic text-warn">
                         empate
                       </span>
@@ -169,7 +183,7 @@ export function TableauTable({ tableau, entering, leaving, ratios, ties }: Props
                 >
                   {bj}
                 </td>
-                {showRatios && (
+                {showRowRatios && (
                   <td
                     className={`${pinR}${box(false, false)} ${stickyBg(isLeaving)} whitespace-nowrap px-3 py-1.5 text-center ${
                       isLeaving ? "font-semibold text-pen" : ""
@@ -223,6 +237,28 @@ export function TableauTable({ tableau, entering, leaving, ratios, ties }: Props
             {blankB}
             {blankR}
           </tr>
+          {showColRatios && (
+            <tr>
+              {blankVB}
+              <td
+                className={`${cbPin}${box(false, true)} bg-paper whitespace-nowrap px-3 py-1.5 text-center font-sans text-xs font-medium not-italic text-ink-soft`}
+              >
+                razón mín
+              </td>
+              {varCols.map((col, j) => (
+                <td
+                  key={col}
+                  className={`${box(false, false)} ${tintBg(j === enteringIdx)} whitespace-nowrap px-3 py-1.5 text-center font-sans text-xs ${
+                    j === enteringIdx ? "font-semibold text-pen" : ""
+                  }`}
+                >
+                  {ratios?.[j] ?? ""}
+                </td>
+              ))}
+              {blankB}
+              {blankR}
+            </tr>
+          )}
         </tbody>
       </table>
     </div>

@@ -152,3 +152,37 @@ class Tableau:
         pivot_col_index = self.columns.index(entering)
         
         return pivot_row.cells[pivot_col_index]
+
+    def is_primal_feasible(self) -> bool:
+        return all(row.cells[-1] >= Fraction(0) for row in self.rows)
+
+    def get_dual_leaving_variable(self) -> tuple[str | None, list[str]]:
+        neg_rows = [row for row in self.rows if row.cells[-1] < Fraction(0)]
+        if not neg_rows:
+            return (None, [])
+        min_rhs = min(row.cells[-1] for row in neg_rows)
+        ties = [row.basic for row in neg_rows if row.cells[-1] == min_rhs]
+        return (ties[0], ties)
+
+    def get_dual_entering_variable(self, leaving: str) -> tuple[str | None, list[str], list[str]]:
+        pivot_row = next((r for r in self.rows if r.basic == leaving), None)
+        if pivot_row is None:
+            raise ValueError(f"Leaving variable {leaving} not found in tableau rows")
+
+        candidates: list[tuple[Fraction, str]] = []
+        ratios_str: list[str] = []
+
+        for j, col in enumerate(self.columns[:-1]):
+            if pivot_row.cells[j] < Fraction(0):
+                ratio = abs(self.cj_zj[j].const / pivot_row.cells[j])
+                candidates.append((ratio, col))
+                ratios_str.append(str(ratio))
+            else:
+                ratios_str.append("-")
+
+        if not candidates:
+            return (None, ratios_str, [])
+
+        min_ratio = min(r for r, _ in candidates)
+        ties = [col for r, col in candidates if r == min_ratio]
+        return (ties[0], ratios_str, ties)

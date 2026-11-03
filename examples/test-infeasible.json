@@ -42,6 +42,9 @@
     },
     "big_m": {
       "status": "infeasible"
+    },
+    "dual_simplex": {
+      "status": "infeasible"
     }
   }
 }

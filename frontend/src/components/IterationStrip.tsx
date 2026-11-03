@@ -8,7 +8,7 @@ const FINAL_NOTE: Record<string, string> = {
   unbounded:
     "La columna elegida no tiene coeficientes positivos: el problema no está acotado.",
   infeasible:
-    "Quedó una variable artificial en la base: el problema es infactible.",
+    "El problema es infactible: no existe solución que cumpla todas las restricciones.",
 };
 
 interface Props {

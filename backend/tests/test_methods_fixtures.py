@@ -13,13 +13,14 @@ from fastapi.testclient import TestClient
 
 from solver.main import app
 from solver.methods import REGISTRY, MethodNotAdmissibleError
+from solver.methods.simplex import uses_equivalent_transform
 from solver.schemas import Problem
 
 EXAMPLES = Path(__file__).resolve().parents[2] / "examples"
 CASES = [
     (eid, method)
     for eid in ("bakery-real", "test-unbounded", "test-infeasible", "simplex-grupo1")
-    for method in ("simplex", "big_m")
+    for method in ("simplex", "big_m", "dual_simplex")
 ]
 
 
@@ -82,6 +83,34 @@ def test_bakery_real_big_m_respects_all_bounds():
     assert sum(c * x[n] for c, n in zip(coefs, names)) == Fraction(result.objective["value"])
 
 
+
+def test_bakery_real_simplex_equivalent_transform_matches_big_m():
+    problem = Problem(**_load("bakery-real")["problem"])
+    assert uses_equivalent_transform(problem) is True
+
+    s_res = REGISTRY["simplex"].run(problem)
+    bm_res = REGISTRY["big_m"].run(problem)
+
+    expected_sol = [
+        ("Tradicional", "35"),
+        ("Premium Balanceado", "1595/18"),
+        ("Orgánico", "0"),
+        ("Origen Regional", "35"),
+        ("Mujeres Cafeteras", "30"),
+    ]
+    assert [(v.name, v.value) for v in s_res.solution] == expected_sol
+    assert [(v.name, v.value) for v in bm_res.solution] == expected_sol
+    assert s_res.objective == {"sense": "max", "value": "135857/36"}
+    assert bm_res.objective == {"sense": "max", "value": "135857/36"}
+
+    assert any(
+        sc.type == "normalized_constraint" and "transformación al problema equivalente" in sc.detail
+        for sc in s_res.special_cases
+    )
+
+    problem_g1 = Problem(**_load("simplex-grupo1")["problem"])
+    assert uses_equivalent_transform(problem_g1) is False
+    assert REGISTRY["simplex"].run(problem_g1).special_cases == []
 def test_simplex_grupo1_shadow_prices_match_pdf():
     problem = _load("simplex-grupo1")["problem"]
     body = TestClient(app).post(
@@ -101,18 +130,24 @@ def test_comparar_contract_on_examples(example_id):
     res = comparar(ComparisonRequest(problem=problem))
     assert "simplex" in res.results
     assert "big_m" in res.results
+    assert "dual_simplex" in res.results
     assert res.verdict != ""
     if example_id == "simplex-grupo1":
         assert res.same_objective is True
         assert res.results["simplex"].status == "optimal"
         assert res.results["big_m"].status == "optimal"
+        assert res.results["dual_simplex"].status == "optimal"
     elif example_id == "bakery-real":
-        assert res.same_objective is None
-        assert res.results["simplex"].status == "not_admissible"
+        assert res.same_objective is True
+        assert res.results["simplex"].status == "optimal"
         assert res.results["big_m"].status == "optimal"
+        assert res.results["dual_simplex"].status == "optimal"
+        assert "Simplex usó transformación al problema equivalente" in res.verdict
     elif example_id == "test-unbounded":
         assert res.results["simplex"].status == "unbounded"
         assert res.results["big_m"].status == "unbounded"
+        assert res.results["dual_simplex"].status == "unbounded"
     elif example_id == "test-infeasible":
         assert res.results["simplex"].status == "not_admissible"
         assert res.results["big_m"].status == "infeasible"
+        assert res.results["dual_simplex"].status == "infeasible"

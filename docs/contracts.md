@@ -158,18 +158,19 @@ class MethodResult(BaseModel):
 
 ### `methods/simplex.py`
 
-- **build** — valida y si no pasa lanza `MethodNotAdmissibleError` (→ 422 con mensaje español):
-  - toda restricción debe ser `<=` ("El método Simplex solo admite restricciones ≤ … usa Gran M")
-  - `rhs >= 0` en todas (forma estándar; RHS negativo → sugerir Gran M)
-  - ≤ 8 variables / ≤ 13 restricciones
-  - $C_j$ = coeficientes originales del objetivo; holguras con $C_j = 0$
-  - agrega `s_1..s_m`; base inicial = holguras ($C_B = 0$); llama `evaluate()` al final
+- **build** — valida y construye el tableau inicial:
+  - ≤ 8 variables / ≤ 13 restricciones (fuera de rango → `MethodNotAdmissibleError`).
+  - restricciones `=`: no admisibles en Simplex estándar (lanza `MethodNotAdmissibleError` sugiriendo Gran M).
+  - **forma estándar directa:** si todas las restricciones son `<=` con RHS no negativos, agrega `s_1..s_m`, base inicial = holguras ($C_B = 0$), $C_j$ = coeficientes originales y llama `evaluate()`.
+  - **transformación al problema equivalente:** si el modelo contiene restricciones `>=` con un vértice base factible derivable ($\mathbf{x}^0 \ge \mathbf{0}$, $\mathbf{b}_y \ge \mathbf{0}$), construye el cambio afín de variables $\mathbf{x} = \mathbf{x}^0 + \mathbf{T}\mathbf{y}$ con $\mathbf{y} \ge \mathbf{0}$, generando un problema estándar equivalente con holguras puras en coordenadas $\mathbf{y}$. Si el sistema es puramente $\ge$ o infactible, lanza `MethodNotAdmissibleError` sugiriendo Gran M.
+- **restore_tableau**:
+  - Cuando se usó transformación afín, proyecta la tabla óptima en $\mathbf{y}$ hacia las variables originales $\mathbf{x}$ mediante $\mathbf{T}^{-1}$, actualiza $Z_j = Z_0 + Z_y$ y canonicaliza los pivotes para que las variables de decisión originales formen la base identidad.
 - **interpret**:
-  - `unbounded` → frase + iteración donde se detectó
-  - degeneración (empate en razón mínima o básica en 0) → `degenerate_pivot` con frase
-  - óptimos alternativos → no básica con $C_j - Z_j = 0$ en la tabla final → `alternative_optima`
-  - solución: variables originales desde la base final (0 si no básicas), $Z$ = `zj[bj]` directo
-
+  - si se aplicó transformación equivalente, registra `SpecialCase(type="normalized_constraint")` con el detalle en español (vértice base $\mathbf{x}^0$ y $Z_0$).
+  - `unbounded` → frase + iteración donde se detectó.
+  - degeneración (`degenerate_pivot`) → empate en razón mínima o variable básica en 0 (excluyendo holguras sustituidas por el cambio de variables).
+  - óptimos alternativos (`alternative_optima`) → variable no básica con $C_j - Z_j = 0$ en la tabla final.
+  - solución: variables originales desde la base final (0 si no básicas), $Z$ = `zj[bj]` directo en la tabla restaurada.
 ### `methods/big_m.py`
 
 - **build**:
