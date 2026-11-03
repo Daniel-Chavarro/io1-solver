@@ -22,41 +22,15 @@ en **`docs/contracts.md`**.
 
 ## Opciones de ejecución
 
-Puedes levantar el proyecto de dos formas:
-1. **Ruta A (local con `uv`, recomendada/oficial)**: todo en un solo puerto y sin contenedor.
-2. **Ruta B (con Docker Compose)**: alternativa contenerizada para levantar frontend y backend en servicios separados sin configurar entornos locales.
-
+Puedes levantar el proyecto de tres formas:
+1. **Ruta A (con Docker Compose, recomendada)**: levanta el frontend y el backend contenerizados en un solo paso, sin necesidad de instalar Python, `uv` ni Node.js.
+2. **Ruta B (local en un solo puerto sin Docker)**: backend con `uv` sirviendo la interfaz precompilada (`frontend/dist`) en `http://127.0.0.1:8000`.
+3. **Ruta C (servidores separados con `npm run dev`)**: fallback si la Ruta B falla o si necesitas recarga en caliente durante el desarrollo.
 ---
 
-### Ruta A — Local sin Docker (oficial)
-Desde la raíz del repositorio con un solo comando (con `uv`):
+### Ruta A — Con Docker Compose (recomendada)
 
-```bash
-uv run --directory backend uvicorn solver.main:app
-# → http://127.0.0.1:8000
-```
-
-O desde la carpeta `backend/`:
-
-```bash
-cd backend
-uv sync
-uv run uvicorn solver.main:app
-```
-
-Con `frontend/dist` presente (precompilado y commiteado en los tags de entrega),
-el backend sirve la app completa (SPA estática + API) en un solo comando y un
-solo puerto (**http://127.0.0.1:8000**), **sin requerir Node.js**.
-
-Para compilar `frontend/dist` en desarrollo (requiere Node):
-
-```bash
-cd frontend && npm ci && npm run build
-```
-
-### Ruta B — Alternativa con Docker Compose
-
-Si prefieres no instalar `uv` ni `Node.js` localmente, puedes levantar la aplicación completa en contenedores con Docker Compose:
+Levanta la aplicación completa (backend y frontend en contenedores listos para usar):
 
 ```bash
 docker compose up --build
@@ -64,19 +38,66 @@ docker compose up --build
 
 Una vez levantado:
 - **Frontend (UI)**: [http://localhost:5173](http://localhost:5173)
-- **Backend (API / Docs)**: [http://localhost:8000](http://localhost:8000) (salud en `/health`, docs en `/docs`)
+- **Backend (API / Docs)**: [http://localhost:8000](http://localhost:8000) (salud en `/health`, docs OpenAPI en `/docs`)
 
 Para detener los servicios:
+
 ```bash
 docker compose down
 ```
 
 ---
 
-## Desarrollo (dos terminales)
+### Ruta B — Local sin Docker (con `uv`)
 
-- Backend: `cd backend && uv run uvicorn solver.main:app --reload`
-- Frontend: `cd frontend && npm run dev` (proxy de `/api` → `:8000`)
+Permite correr el backend y servir la interfaz gráfica directamente desde el host:
+
+1. **Compilar la interfaz (requiere Node.js)**:
+   ```bash
+   cd frontend && npm ci && npm run build && cd ..
+   ```
+   *(Si ya cuentas con la carpeta `frontend/dist` precompilada, puedes omitir este paso).*
+
+2. **Iniciar el servidor** desde la raíz con `uv`:
+   ```bash
+   uv run --directory backend uvicorn solver.main:app
+   ```
+   *(O entrando a `backend/`: `cd backend && uv sync && uv run uvicorn solver.main:app`).*
+
+3. **Acceso a la aplicación**:
+   Al detectar `frontend/dist`, el backend unifica todo en un solo puerto:
+   - **Frontend (UI visual completa)**: abre tu navegador en [http://127.0.0.1:8000](http://127.0.0.1:8000)
+   - **API y Documentación OpenAPI**: disponible en [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
+
+> **Nota**: Si ejecutas el backend sin compilar `frontend/dist`, solo responderán los endpoints de la API (`/api/...`, `/docs`, etc.) en el puerto `:8000`, sin la interfaz gráfica web.
+
+---
+
+### Ruta C — Servidores separados con `npm run dev` (fallback / desarrollo)
+
+Si la compilación de `frontend/dist` en la Ruta B falla, o prefieres levantar ambos entornos por separado con recarga en vivo (hot-reload), abre dos terminales:
+
+1. **Terminal 1 — Backend (FastAPI)**:
+   ```bash
+   cd backend
+   uv sync
+   uv run uvicorn solver.main:app --reload
+   ```
+   *(Queda disponible en [http://127.0.0.1:8000](http://127.0.0.1:8000))*.
+
+2. **Terminal 2 — Frontend (Vite Dev Server)**:
+   ```bash
+   cd frontend
+   npm install
+   npm run dev
+   ```
+   *(Vite inicia en [http://localhost:5173](http://localhost:5173) y reenvía automáticamente las peticiones de `/api` hacia el backend en el puerto `:8000`)*.
+
+3. **Acceso a la aplicación**:
+   - **Frontend (UI con recarga en vivo)**: abre [http://localhost:5173](http://localhost:5173)
+   - **Backend (API / Docs)**: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
+
+---
 
 ## Tests
 
@@ -116,7 +137,7 @@ Lo que evita perder código (ya configurado en el repo):
 ## Tags de entrega
 
 `frontend/dist` va ignorado en desarrollo; en cada entrega se fuerza y se
-etiqueta (para que la Ruta A funcione desde el tag sin Node):
+etiqueta (para que la Ruta B local funcione desde el tag sin Node):
 
 ```bash
 cd frontend && npm ci && npm run build
