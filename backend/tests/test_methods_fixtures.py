@@ -82,6 +82,13 @@ def test_bakery_real_big_m_respects_all_bounds():
     assert sum(c * x[n] for c, n in zip(coefs, names)) == Fraction(result.objective["value"])
 
 
+<<<<<<< HEAD
+=======
+@pytest.mark.xfail(
+    strict=True,
+    reason="sensitivity.analyze is still a stub (POST /api/sensibilidad returns 501)",
+)
+>>>>>>> origin/main
 def test_simplex_grupo1_shadow_prices_match_pdf():
     problem = _load("simplex-grupo1")["problem"]
     body = TestClient(app).post(
@@ -92,6 +99,7 @@ def test_simplex_grupo1_shadow_prices_match_pdf():
         "vCPU": ("10", True), "RAM": ("5", True),
         "SSD": ("5", True), "Licencias BD": ("0", False),
     }
+<<<<<<< HEAD
 
 @pytest.mark.parametrize("example_id", ["bakery-real", "simplex-grupo1", "test-unbounded", "test-infeasible"])
 def test_comparar_contract_on_examples(example_id):
@@ -118,3 +126,5 @@ def test_comparar_contract_on_examples(example_id):
         assert res.results["simplex"].status == "not_admissible"
         assert res.results["big_m"].status == "infeasible"
 
+=======
+>>>>>>> origin/main

@@ -6,7 +6,10 @@ import { MethodTabs, type TabId } from "./components/MethodTabs";
 import { ProblemForm, BLANK_DRAFT } from "./components/ProblemForm";
 import { ErrorBanner } from "./components/ErrorBanner";
 import { SolutionSummary } from "./components/SolutionSummary";
+<<<<<<< HEAD
 import { SensitivityPanel } from "./components/SensitivityPanel";
+=======
+>>>>>>> origin/main
 import { SpecialCasesPanel } from "./components/SpecialCasesPanel";
 import { Stepper } from "./components/Stepper";
 
@@ -101,6 +104,7 @@ export default function App() {
           </section>
         )}
 
+<<<<<<< HEAD
         {tab === "sensibilidad" &&
           (solved?.result.status === "optimal" ? (
             <SensitivityPanel
@@ -128,6 +132,18 @@ export default function App() {
               </button>
             </section>
           ))}
+=======
+        {tab === "sensibilidad" && (
+          <section className="sheet space-y-2 p-6">
+            <h2 className="font-display text-xl font-semibold">Sensibilidad</h2>
+            <p className="max-w-xl text-sm text-ink-soft">
+              Precios sombra, costos reducidos y rangos de c<sub>j</sub> y
+              b<sub>i</sub> sobre el problema resuelto, con su interpretación.
+              Disponible en la entrega final.
+            </p>
+          </section>
+        )}
+>>>>>>> origin/main
       </main>
 
       <footer className="mx-auto max-w-6xl px-4 pb-10 text-xs text-ink-soft sm:px-6">

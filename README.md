@@ -108,4 +108,8 @@ git tag entrega-N && git push origin main --tags
 
 ## Equipo
 
+<<<<<<< HEAD
 Daniel Chavarro (P1) · Jorge Méndez (P2) · Nicolás Velazco (P3) · Santiago Vargas (P4)
+=======
+Daniel Chavarro (P1) · Jorge Méndez (P2) · Nicolás Velazco (P3) · Santiago Vargas (P3)
+>>>>>>> origin/main
