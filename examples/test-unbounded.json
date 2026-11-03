@@ -40,6 +40,9 @@
     },
     "big_m": {
       "status": "unbounded"
+    },
+    "dual_simplex": {
+      "status": "unbounded"
     }
   }
 }

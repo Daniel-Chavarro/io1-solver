@@ -23,6 +23,7 @@
   },
   "expected": {
     "simplex": { "status": "optimal", "objective_value": "1575" },
-    "big_m": { "status": "optimal", "objective_value": "1575" }
+    "big_m": { "status": "optimal", "objective_value": "1575" },
+    "dual_simplex": { "status": "optimal", "objective_value": "1575" }
   }
 }

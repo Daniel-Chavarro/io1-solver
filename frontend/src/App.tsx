@@ -49,7 +49,7 @@ export default function App() {
             Solver de programación lineal
           </h1>
           <p className="mt-1 max-w-2xl text-sm text-ink-soft sm:text-base">
-            Simplex y Gran M paso a paso, con aritmética exacta. Escribe tu
+            Simplex, Gran M y Simplex Dual paso a paso, con aritmética exacta. Escribe tu
             problema o carga un ejemplo y sigue cada tabla, pivote a pivote.
           </p>
         </div>
@@ -95,7 +95,7 @@ export default function App() {
           <section className="sheet space-y-2 p-6">
             <h2 className="font-display text-xl font-semibold">Comparación</h2>
             <p className="max-w-xl text-sm text-ink-soft">
-              Correrá Simplex y Gran M sobre el mismo problema y comparará
+              Correrá Simplex, Gran M y Simplex Dual sobre el mismo problema y comparará
               iteraciones, tiempo y valor de Z. Disponible en la entrega final.
             </p>
           </section>

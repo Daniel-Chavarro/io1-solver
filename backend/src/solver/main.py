@@ -132,26 +132,32 @@ def comparar(req: ComparisonRequest):
             results[method_id] = MethodSummary(method=method_id, status="not_implemented")
         except MethodNotAdmissibleError:
             results[method_id] = MethodSummary(method=method_id, status="not_admissible")
-
     same = None
-    if len(results) == 2 and all(r.status == "optimal" for r in results.values()):
-        same = obj_values.get("simplex") == obj_values.get("big_m")
-        if same:
-            verdict = f"Ambos métodos convergen a la misma solución óptima (Z = {obj_values.get('simplex')})."
-        else:
-            verdict = "Ambos métodos son admisibles pero difieren en el valor óptimo."
-    elif results.get("simplex") and results["simplex"].status == "not_admissible" and results.get("big_m") and results["big_m"].status == "optimal":
-        verdict = "El problema contiene restricciones >= o =, por lo que solo es admisible para Gran M."
-    elif any(r.status == "unbounded" for r in results.values()):
+    if any(r.status == "unbounded" for r in results.values()):
         verdict = "El problema no está acotado."
     elif any(r.status == "infeasible" for r in results.values()):
         verdict = "El problema no tiene solución factible (infactible)."
     else:
-        verdict = "Comparación completada."
+        optimal_values = [obj_values[m] for m, r in results.items() if r.status == "optimal"]
+        if len(optimal_values) >= 2:
+            same = len(set(optimal_values)) == 1
+            if same:
+                if len(optimal_values) == len(results) and all(r.status == "optimal" for r in results.values()):
+                    verdict = f"Los tres métodos convergen a la misma solución óptima (Z = {optimal_values[0]})."
+                elif results.get("simplex") and results["simplex"].status == "not_admissible":
+                    verdict = f"El problema no está en forma estándar para Simplex; Gran M y Simplex Dual convergen a la misma solución óptima (Z = {optimal_values[0]})."
+                else:
+                    verdict = f"Los métodos admisibles convergen a la misma solución óptima (Z = {optimal_values[0]})."
+            else:
+                verdict = "Los métodos admisibles difieren en el valor óptimo."
+        elif len(optimal_values) == 1 and results.get("simplex") and results["simplex"].status == "not_admissible":
+            verdict = "El problema contiene restricciones >= o =, por lo que no es admisible para Simplex."
+        else:
+            verdict = "Comparación completada."
 
     return Comparison(
-        results=results, same_objective=same,
-        verdict=verdict)
+        results=results, same_objective=same, verdict=verdict
+    )
 
 
 # Serve the built frontend (README ruta A). Needs frontend/dist (npm run build).

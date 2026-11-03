@@ -13,7 +13,7 @@ basis at value 0 must not leak M into reported numbers.
 from decimal import Decimal
 from fractions import Fraction
 
-from .engine.solver import solve
+from .engine.solver import solve, solve_dual
 from .methods.base import Method
 from .schemas import (
     ObjRange,
@@ -33,17 +33,45 @@ def _frac(text: str) -> Fraction:
     return Fraction(Decimal(text))
 
 
-def _constraint_columns(problem: Problem, method: Method):
-    """Per constraint: (id_col, slack_var, flipped).
+def _constraint_columns(
+    problem: Problem, method: Method
+) -> tuple[list[tuple[str, str | None, bool, str | None]], set[str]]:
+    """Per constraint: (id_col, slack_var, flipped, neg_col) and excluded_aux_cols.
 
     id_col is the column that was the unit vector e_i in the initial tableau
     (slack for <=, artificial for >= and =); slack_var is the slack/excess
     whose final value measures the constraint's slack (None for =).
-    Mirrors the naming in SimplexMethod.build / BigMMethod.build.
+    For dual_simplex with =, neg_col is the paired slack from the -coeffs row.
     """
-    if method.id != "big_m":
-        return [(f"s{i + 1}", f"s{i + 1}", False) for i in range(len(problem.constraints))]
+    if method.id == "simplex":
+        return (
+            [(f"s{i + 1}", f"s{i + 1}", False, None) for i in range(len(problem.constraints))],
+            set(),
+        )
 
+    if method.id == "dual_simplex":
+        out: list[tuple[str, str | None, bool, str | None]] = []
+        excluded_aux: set[str] = set()
+        n_s = 0
+        for constraint in problem.constraints:
+            op = constraint.op
+            if op == "<=":
+                n_s += 1
+                out.append((f"s{n_s}", f"s{n_s}", False, None))
+            elif op == ">=":
+                n_s += 1
+                out.append((f"s{n_s}", f"s{n_s}", True, None))
+            elif op == "=":
+                n_s += 1
+                s_pos = f"s{n_s}"
+                n_s += 1
+                s_neg = f"s{n_s}"
+                out.append((s_pos, None, False, s_neg))
+                excluded_aux.add(s_pos)
+                excluded_aux.add(s_neg)
+        return out, excluded_aux
+
+    # big_m
     out = []
     n_s = n_e = n_a = 0
     for constraint in problem.constraints:
@@ -53,16 +81,15 @@ def _constraint_columns(problem: Problem, method: Method):
             op = {"<=": ">=", ">=": "<=", "=": "="}[op]
         if op == "<=":
             n_s += 1
-            out.append((f"s{n_s}", f"s{n_s}", flipped))
+            out.append((f"s{n_s}", f"s{n_s}", flipped, None))
         elif op == ">=":
             n_e += 1
             n_a += 1
-            out.append((f"a{n_a}", f"e{n_e}", flipped))
+            out.append((f"a{n_a}", f"e{n_e}", flipped, None))
         else:
             n_a += 1
-            out.append((f"a{n_a}", None, flipped))
-    return out
-
+            out.append((f"a{n_a}", None, flipped, None))
+    return out, set()
 
 
 def _fmt(base: Fraction, delta: Fraction | None, inf: str) -> str:
@@ -77,7 +104,7 @@ def _tighten(lo, hi, bound, is_lower):
 
 def analyze(problem: Problem, method: Method) -> SensitivityReport:
     initial = method.build(problem)
-    engine_result = solve(initial)
+    engine_result = solve_dual(initial) if method.id == "dual_simplex" else solve(initial)
     method_result = method.interpret(engine_result, problem)
     if method_result.status != "optimal":
         raise SensitivityNotAvailableError(
@@ -107,24 +134,30 @@ def analyze(problem: Problem, method: Method) -> SensitivityReport:
     def d_real(k: int) -> Fraction:
         return c_real(k) - z_real(k)
 
-    mapping = _constraint_columns(problem, method)
+    mapping, excluded_aux_cols = _constraint_columns(problem, method)
 
     # ---- shadow prices and rhs ranges ----
     shadow_prices: list[ShadowPrice] = []
     rhs_ranges: list[RhsRange] = []
-    for constraint, (id_col, slack_var, flipped) in zip(problem.constraints, mapping):
+    for constraint, (id_col, slack_var, flipped, neg_col) in zip(problem.constraints, mapping):
         k_id = columns.index(id_col)
-        slack_val = (
-            row_by_basic[slack_var].cells[-1]
-            if slack_var is not None and slack_var in row_by_basic
-            else Fraction(0)
-        )
-        binding = slack_val == 0
-        pi = z_real(k_id)
-        if flipped:
-            pi = -pi
-        if not binding:
-            pi = Fraction(0)
+        if neg_col is not None:
+            k_neg = columns.index(neg_col)
+            pi = z_real(k_id) - z_real(k_neg)
+            binding = True
+            slack_val = Fraction(0)
+        else:
+            slack_val = (
+                row_by_basic[slack_var].cells[-1]
+                if slack_var is not None and slack_var in row_by_basic
+                else Fraction(0)
+            )
+            binding = slack_val == 0
+            pi = z_real(k_id)
+            if flipped:
+                pi = -pi
+            if not binding:
+                pi = Fraction(0)
 
         name = constraint.name
         if not binding:
@@ -153,7 +186,11 @@ def analyze(problem: Problem, method: Method) -> SensitivityReport:
         b = _frac(constraint.rhs)
         lo = hi = None
         for r in rows:
-            beta = r.cells[k_id] * (-1 if flipped else 1)
+            if neg_col is not None:
+                k_neg = columns.index(neg_col)
+                beta = r.cells[k_id] - r.cells[k_neg]
+            else:
+                beta = r.cells[k_id] * (-1 if flipped else 1)
             b_bar = r.cells[-1]
             if beta > 0:
                 lo, hi = _tighten(lo, hi, -b_bar / beta, True)
@@ -179,8 +216,11 @@ def analyze(problem: Problem, method: Method) -> SensitivityReport:
 
     # ---- reduced costs and objective ranges ---
     nonbasic_cols = [
-        k for k in range(n_cols)
-        if columns[k] not in basic_vars and columns[k] not in artificial_cols
+        k
+        for k in range(n_cols)
+        if columns[k] not in basic_vars
+        and columns[k] not in artificial_cols
+        and columns[k] not in excluded_aux_cols
     ]
     reduced_costs: list[ReducedCost] = []
     objective_ranges: list[ObjRange] = []
