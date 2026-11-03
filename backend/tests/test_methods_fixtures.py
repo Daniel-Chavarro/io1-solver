@@ -111,7 +111,6 @@ def test_bakery_real_simplex_equivalent_transform_matches_big_m():
     problem_g1 = Problem(**_load("simplex-grupo1")["problem"])
     assert uses_equivalent_transform(problem_g1) is False
     assert REGISTRY["simplex"].run(problem_g1).special_cases == []
-
 def test_simplex_grupo1_shadow_prices_match_pdf():
     problem = _load("simplex-grupo1")["problem"]
     body = TestClient(app).post(

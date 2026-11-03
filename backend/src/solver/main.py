@@ -196,6 +196,7 @@ def comparar(req: ComparisonRequest):
             results[method_id] = MethodSummary(method=method_id, status="not_implemented")
         except MethodNotAdmissibleError:
             results[method_id] = MethodSummary(method=method_id, status="not_admissible")
+
     same = None
     optimal_vals = [z_values[m] for m, r in results.items() if r.status == "optimal" and m in z_values]
     if len(optimal_vals) == len(results):

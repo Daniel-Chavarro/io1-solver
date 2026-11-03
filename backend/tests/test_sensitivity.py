@@ -103,6 +103,7 @@ def test_contract_bakery_example(method):
         "demanda_hojaldre_min": ("5", ("0", "40")),
     }
 
+
 def test_negative_rhs_keeps_original_sign_and_range():
     # c2: -x1 - x2 <= -5 (non-binding at x1+x2 = 10); b2 may fall to -10.
     p = _problem("max", ["2", "3"],
