@@ -1,10 +1,10 @@
 # Transformación al Problema Equivalente para Simplex — Caso Real Procafecol S.A.
 
 > **Proyecto:** `solver` (Investigación de Operaciones 1)  
-> **Grupo:** 3 — Métodos: Simplex Primal y Gran M  
+> **Grupo:** 3 — Métodos: Simplex Primal (con Problema Equivalente), Gran M y Simplex Dual  
 > **Lineamiento del curso:** "¿Mismo problema?: Sí"  
 > **Fecha:** Noviembre 2026  
-> **Estado:** Implementado, verificado y validado contra Gran M (`116 passed`).
+> **Estado:** Implementado, verificado y validado contra Gran M y Simplex Dual (`150 passed`).
 
 ---
 
@@ -33,24 +33,23 @@ Para cumplir estrictamente con el lineamiento sin alterar el problema ni recurri
 
 ### 2.2 Función Objetivo
 Maximizar la contribución marginal total mensual (en millones de COP):
-$$\max Z = 30.5\,x_1 + 29.8\,x_2 + 33.2\,x_3 + 34.0\,x_4 + 31.5\,x_5$$
+$$\max Z = 14.20\,x_1 + 18.50\,x_2 + 22.20\,x_3 + 24.50\,x_4 + 26.00\,x_5$$
 
 ### 2.3 Restricciones Operativas y de Mercado
-1. **Trilla:** $0.65 x_1 + 0.65 x_2 + 0.70 x_3 + 0.70 x_4 + 0.68 x_5 \le 180$ (horas/mes)
-2. **Tostión:** $0.50 x_1 + 0.50 x_2 + 0.55 x_3 + 0.55 x_4 + 0.52 x_5 \le 140$ (horas/mes)
-3. **Molienda:** $0.40 x_1 + 0.40 x_2 + 0.45 x_3 + 0.45 x_4 + 0.42 x_5 \le 120$ (horas/mes)
-4. **Empaque:** $0.35 x_1 + 0.35 x_2 + 0.35 x_3 + 0.35 x_4 + 0.35 x_5 \le 90$ (horas/mes)
-5. **Control de calidad:** $0.15 x_1 + 0.15 x_2 + 0.20 x_3 + 0.20 x_4 + 0.18 x_5 \le 45$ (horas/mes)
-6. **Mínimo canal retail:** $x_1 + x_2 \ge 95$ *(restricción $\ge$ comercial)*
-7. **Mínimo 25% línea especial:** $-\frac{1}{4}x_1 - \frac{1}{4}x_2 + \frac{3}{4}x_3 + \frac{3}{4}x_4 + \frac{3}{4}x_5 \ge 0$ *(restricción $\ge$ de mezcla de ventas)*
-8. **Cota inferior Tradicional:** $x_1 \ge 35$ *(contrato institucional vigente)*
-9. **Cota inferior Premium Balanceado:** $x_2 \ge 30$ *(pedido mínimo tiendas propias)*
-10. **Cota superior Orgánico:** $x_3 \le 35$ *(disponibilidad de grano verde certificado)*
-11. **Cota superior Origen Regional:** $x_4 \le 40$ *(cupo asociativo regional)*
-12. **Cota inferior Mujeres Cafeteras:** $x_5 \ge 10.5$ *(compromiso de equidad de género)*
-13. **Cota superior Mujeres Cafeteras:** $x_5 \le 30$ *(capacidad de acopio especializada)*
+1. **Tostión:** $3.20 x_1 + 3.60 x_2 + 4.20 x_3 + 4.40 x_4 + 4.50 x_5 \le 720$ (horas/mes)
+2. **Molienda:** $2.50 x_1 + 2.20 x_2 + 1.50 x_3 + 1.60 x_4 + 1.80 x_5 \le 420$ (horas/mes)
+3. **Envasado:** $2.80 x_1 + 3.00 x_2 + 3.40 x_3 + 3.50 x_4 + 3.60 x_5 \le 600$ (horas/mes)
+4. **Café verde total:** $1.18 x_1 + 1.18 x_2 + 1.18 x_3 + 1.18 x_4 + 1.18 x_5 \le 236$ (ton/mes)
+5. **Café verde especial:** $1.18 x_3 + 1.18 x_4 + 1.18 x_5 \le 76.7$ (ton/mes)
+6. **Mínimo retail:** $x_1 + x_2 \ge 95$ *(restricción $\ge$ comercial)*
+7. **Mínimo 25% especial:** $-\frac{1}{4}x_1 - \frac{1}{4}x_2 + \frac{3}{4}x_3 + \frac{3}{4}x_4 + \frac{3}{4}x_5 \ge 0$ *(restricción $\ge$ de mezcla de ventas)*
+8. **Cota mín Tradicional:** $x_1 \ge 35$ *(contrato institucional vigente)*
+9. **Cota mín Premium Balanceado:** $x_2 \ge 30$ *(pedido mínimo tiendas propias)*
+10. **Cota máx Orgánico:** $x_3 \le 35$ *(disponibilidad de grano verde certificado)*
+11. **Cota máx Origen Regional:** $x_4 \le 40$ *(cupo asociativo regional)*
+12. **Cota mín Mujeres Cafeteras:** $x_5 \ge 10.5$ *(compromiso de equidad de género)*
+13. **Cota máx Mujeres Cafeteras:** $x_5 \le 30$ *(capacidad de acopio especializada)*
 14. **No negatividad:** $x_j \ge 0 \quad \forall j \in \{1, \dots, 5\}$.
-
 ---
 
 ## 3. Fundamentación Matemática del Problema Equivalente
@@ -170,31 +169,32 @@ El método `SimplexMethod.restore_tableau` realiza la restitución:
 
 ---
 
-## 6. Comparación Numérica: Simplex vs. Gran M en el Caso Real
+## 6. Comparación Numérica: Simplex vs. Gran M vs. Simplex Dual en el Caso Real
 
-Ambos métodos fueron ejecutados sobre la misma instancia `examples/bakery-real.json`:
+Los tres métodos fueron ejecutados sobre la misma instancia `examples/bakery-real.json`:
 
-| Criterio | Simplex (Problema Equivalente) | Gran M (Penalización Simbólica) | Concordancia |
-|---|---|---|---|
-| **Estado de terminación** | `optimal` | `optimal` | Idéntico |
-| **Valor óptimo $Z$** | $\mathbf{\frac{135857}{36}}$ (3773.80556) | $\mathbf{\frac{135857}{36}}$ (3773.80556) | Exactamente igual |
-| **$x_1$ (Tradicional)** | $35$ ton/mes | $35$ ton/mes | Idéntico |
-| **$x_2$ (Premium Balanceado)** | $\frac{1595}{18} \approx 88.611$ ton/mes | $\frac{1595}{18} \approx 88.611$ ton/mes | Idéntico |
-| **$x_3$ (Orgánico)** | $0$ ton/mes | $0$ ton/mes | Idéntico |
-| **$x_4$ (Origen Regional)** | $35$ ton/mes | $35$ ton/mes | Idéntico |
-| **$x_5$ (Mujeres Cafeteras)** | $30$ ton/mes | $30$ ton/mes | Idéntico |
-| **Tablas en el Stepper** | **5 tablas** (4 pivotes) | **10 tablas** (9 pivotes) | Simplex usa la mitad de tablas |
-| **Dimensión de tablas** | $13 \times 19$ (13 filas, 5 vars, 13 holguras, $b_j$) | $13 \times 24$ (13 filas, 5 vars, 13 holguras/excesos, 5 artificiales, $b_j$) | Simplex es más compacto |
-| **Tiempo de cálculo** | $\approx 18$ ms | $\approx 28$ ms | Simplex es $\approx 35\%$ más rápido |
-| **Variables artificiales** | $0$ (ninguna variable artificial) | $5$ variables artificiales ($a_1, \dots, a_5$) con $-M$ | Ventaja estructural de Simplex |
+| Criterio | Simplex (Problema Equivalente) | Gran M (Penalización Simbólica) | Simplex Dual (Normalización Dual) | Concordancia |
+|---|---|---|---|---|
+| **Estado de terminación** | `optimal` | `optimal` | `optimal` | Idéntico |
+| **Valor óptimo $Z$** | $\mathbf{\frac{135857}{36}}$ (3773.80556) | $\mathbf{\frac{135857}{36}}$ (3773.80556) | $\mathbf{\frac{135857}{36}}$ (3773.80556) | Exactamente igual |
+| **$x_1$ (Tradicional)** | $35$ ton/mes | $35$ ton/mes | $35$ ton/mes | Idéntico |
+| **$x_2$ (Premium Balanceado)** | $\frac{1595}{18} \approx 88.611$ ton/mes | $\frac{1595}{18} \approx 88.611$ ton/mes | $\frac{1595}{18} \approx 88.611$ ton/mes | Idéntico |
+| **$x_3$ (Orgánico)** | $0$ ton/mes | $0$ ton/mes | $0$ ton/mes | Idéntico |
+| **$x_4$ (Origen Regional)** | $35$ ton/mes | $35$ ton/mes | $35$ ton/mes | Idéntico |
+| **$x_5$ (Mujeres Cafeteras)** | $30$ ton/mes | $30$ ton/mes | $30$ ton/mes | Idéntico |
+| **Tablas en el Stepper** | **5 tablas** (4 pivotes) | **10 tablas** (9 pivotes) | **13 tablas** (12 pivotes: 4 duales + 8 primales) | Simplex usa menos tablas |
+| **Dimensión de tablas** | $\mathbf{13 \times 19}$ (13 filas, 5 vars, 13 holguras, $b_j$) | $13 \times 24$ (13 filas, 5 vars, 8 holguras, 5 excesos, 5 artificiales, $b_j$) | $\mathbf{13 \times 19}$ (13 filas, 5 vars, 13 holguras, $b_j$) | Simplex y Simplex Dual son más compactos |
+| **Tiempo de cálculo** | $\mathbf{\approx 16}$ ms | $\approx 23$ ms | $\approx 24$ ms | Simplex es $\approx 30\%$ más rápido |
+| **Variables artificiales** | **0** (ninguna variable artificial) | $5$ variables artificiales ($a_1, \dots, a_5$) con $-M$ | **0** (ninguna variable artificial) | Ventaja estructural de Simplex y Dual |
 
 ### Análisis Comparativo de Rendimiento y Conveniencia
-1. **Por qué Simplex requiere menos pasos (5 vs. 10 tablas):**
-   En Gran M, cada restricción $\ge$ introduce una variable artificial con coeficiente $-M$ en la función objetivo. La fase inicial de Gran M debe gastar pivotes exclusivamente en expulsar las variables artificiales de la base. En contraste, la transformación afín arranca directamente desde un vértice factible $\mathbf{x}^0$ de la región acotada, por lo que cada iteración de Simplex avanza de inmediato hacia la mejora del margen operativo real, convergiendo en la mitad de iteraciones.
+1. **Por qué Simplex requiere menos pasos (5 vs. 10 de Gran M y 13 de Simplex Dual):**
+   En Gran M, cada restricción $\ge$ introduce una variable artificial con coeficiente $-M$ en la función objetivo, gastando 6 de sus 9 pivotes exclusivamente en expulsar las artificiales. En Simplex Dual, al iniciar en el origen con coeficientes de beneficio positivos en una maximización, la tabla no es dual-factible, por lo que primero gasta 4 pivotes duales para lograr factibilidad primal y luego 8 pivotes primales. En contraste, la transformación afín de Simplex arranca directamente desde un vértice factible $\mathbf{x}^0$ de la región acotada, avanzando de inmediato hacia el óptimo en solo 4 pivotes primales.
 2. **Cuándo conviene cada método:**
-   - **Simplex con problema equivalente:** Conviene cuando el sistema de restricciones $\ge$ proviene de cotas inferiores de recursos o demandas mínimas con un punto base factible conocido o derivable algebraicamente. Es numéricamente más estable, reduce la dimensionalidad del tableau y no requiere aritmética simbólica con $M$.
-   - **Gran M:** Conviene cuando el modelo contiene restricciones de igualdad ($=$) rígidas o cuando las restricciones $\ge$ no permiten identificar un punto base trivial no negativo sin resolver un subproblema de Fase 1.
-
+   - **Simplex con problema equivalente:** Conviene cuando el sistema de restricciones $\ge$ proviene de cotas inferiores o demandas mínimas con un punto base factible derivable algebraicamente. Es el más rápido en este escenario y no requiere variables artificiales ni aritmética simbólica.
+   - **Simplex Dual:** Conviene en problemas de minimización con restricciones $\ge$ y costos positivos (donde el origen ya es dual-factible y converge en tabla mínima sin artificiales), en análisis post-óptimo para reoptimizar ante nuevas restricciones y para detección temprana de infactibilidad.
+   - **Gran M:** Conviene cuando el modelo contiene restricciones de igualdad ($=$) rígidas, donde preserva $m$ filas frente al desdoblamiento de filas de Simplex Dual.
+   *(Para el análisis cuantitativo completo y formal de los 6 escenarios de prueba, consultar [`docs/results/comparacion-metodos.md`](./comparacion-metodos.md)).*
 ---
 
 ## 7. Trazabilidad en la API y en la Interfaz de Usuario
@@ -212,9 +212,9 @@ Cuando Simplex utiliza la transformación afín, `MethodResult.special_cases` in
 ### 7.2 Veredicto Comparativo en `POST /api/comparar`
 El endpoint de comparación emite veredictos diferenciados según si se requirió o no transformación:
 - **En Procafecol (`bakery-real`):**
-  > *"Ambos métodos alcanzaron el mismo óptimo (Z = 135857/36): Simplex usó transformación al problema equivalente por cambio de variables en 5 tablas (13x19, 18.347 ms) y Gran M usó variables artificiales en 10 tablas (13x24, 27.621 ms)."*
+  > *"Los tres métodos alcanzaron el mismo óptimo (Z = 135857/36): Simplex usó transformación al problema equivalente por cambio de variables en 5 tablas (13x19, 16.342 ms), Gran M usó variables artificiales en 10 tablas (13x24, 24.4 ms) y Simplex Dual normalizó restricciones ≥ sin artificiales en 13 tablas (13x19, 24.035 ms)."*
 - **En problemas puramente $\le$ (`simplex-grupo1`):**
-  > *"Ambos métodos alcanzaron el mismo óptimo (Z = 1575) en 4 tablas (4x8); no se requirió transformación al problema equivalente (todas las restricciones son ≤ con RHS ≥ 0) y Gran M no requirió variables artificiales, por lo que conviene Simplex por simplicidad."*
+  > *"Los tres métodos alcanzaron el mismo óptimo (Z = 1575) en 4 tablas (4x8); no se requirió transformación al problema equivalente (todas las restricciones son ≤ con RHS ≥ 0) y ni Gran M ni Simplex Dual requirieron pasos adicionales, por lo que conviene Simplex por simplicidad."*
 
 ### 7.3 Visualización en Frontend
 - `frontend/src/components/SolutionSummary.tsx`: la tarjeta de solución óptima indica explícitamente:

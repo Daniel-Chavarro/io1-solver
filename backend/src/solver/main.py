@@ -136,11 +136,26 @@ def _comparison_verdict(
         z_b = z_values.get("big_m", "")
         if same_objective:
             if not used_transform:
+                if d is not None and d.status == "optimal":
+                    return (
+                        f"Los tres métodos alcanzaron el mismo óptimo (Z = {z_s}) en "
+                        f"{s.iterations} tablas ({s.tableau_shape}); no se requirió transformación "
+                        f"al problema equivalente (todas las restricciones son ≤ con RHS ≥ 0) y "
+                        f"ni Gran M ni Simplex Dual requirieron pasos adicionales, por lo que conviene Simplex por simplicidad."
+                    )
                 return (
                     f"Ambos métodos alcanzaron el mismo óptimo (Z = {z_s}) en "
                     f"{s.iterations} tablas ({s.tableau_shape}); no se requirió transformación "
                     f"al problema equivalente (todas las restricciones son ≤ con RHS ≥ 0) y "
                     f"Gran M no requirió variables artificiales, por lo que conviene Simplex por simplicidad."
+                )
+            if d is not None and d.status == "optimal":
+                return (
+                    f"Los tres métodos alcanzaron el mismo óptimo (Z = {z_s}): "
+                    f"Simplex usó transformación al problema equivalente por cambio de variables "
+                    f"en {s.iterations} tablas ({s.tableau_shape}, {s.elapsed_ms} ms), "
+                    f"Gran M usó variables artificiales en {b.iterations} tablas ({b.tableau_shape}, {b.elapsed_ms} ms) y "
+                    f"Simplex Dual normalizó restricciones ≥ sin artificiales en {d.iterations} tablas ({d.tableau_shape}, {d.elapsed_ms} ms)."
                 )
             return (
                 f"Ambos métodos alcanzaron el mismo óptimo (Z = {z_s}): "
