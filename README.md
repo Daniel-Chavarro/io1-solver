@@ -99,6 +99,22 @@ Si la compilación de `frontend/dist` en la Ruta B falla, o prefieres levantar a
 
 ---
 
+Una vez levantado:
+- **Frontend (UI)**: [http://localhost:5173](http://localhost:5173)
+- **Backend (API / Docs)**: [http://localhost:8000](http://localhost:8000) (salud en `/health`, docs en `/docs`)
+
+Para detener los servicios:
+```bash
+docker compose down
+```
+
+---
+
+## Desarrollo (dos terminales)
+
+- Backend: `cd backend && uv run uvicorn solver.main:app --reload`
+- Frontend: `cd frontend && npm run dev` (proxy de `/api` → `:8000`)
+
 ## Tests
 
 ```bash
