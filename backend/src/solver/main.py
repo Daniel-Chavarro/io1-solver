@@ -14,7 +14,7 @@ from fastapi.staticfiles import StaticFiles
 
 from .methods import REGISTRY, MethodNotAdmissibleError
 from .schemas import Comparison, ComparisonRequest, MethodSummary, Problem, ResolverRequest, SensitivityRequest
-from .sensitivity import analyze
+from .sensitivity import SensitivityNotAvailableError, analyze
 
 app = FastAPI(title="io1-solver", version="0.1.0")
 
@@ -107,8 +107,10 @@ def sensibilidad(req: SensitivityRequest):
         return _error(422, "INVALID_INPUT", f"Metodo desconocido: '{req.method}'")
     try:
         return analyze(req.problem, REGISTRY[req.method])
-    except NotImplementedError:
-        raise HTTPException(status_code=501, detail="Sensibilidad aun no implementada (ver issues)")
+    except MethodNotAdmissibleError as exc:
+        return _error(422, "METHOD_NOT_ADMISSIBLE", str(exc))
+    except SensitivityNotAvailableError as exc:
+        return _error(422, "INVALID_INPUT", str(exc))
 
 
 def _comparison_verdict(
@@ -191,11 +193,13 @@ def comparar(req: ComparisonRequest):
                 iterations=len(res.iterations),
                 elapsed_ms=round((time.perf_counter() - t0) * 1000, 3),
                 tableau_shape=f"{len(res.final_table.rows)}x{len(res.final_table.columns)}")
-            z_values[method_id] = res.objective["value"]
+            if res.status == "optimal":
+                z_values[method_id] = str(res.objective.get("value", ""))
         except NotImplementedError:
             results[method_id] = MethodSummary(method=method_id, status="not_implemented")
         except MethodNotAdmissibleError:
             results[method_id] = MethodSummary(method=method_id, status="not_admissible")
+
     same = None
     if len(results) == 2 and all(r.status == "optimal" for r in results.values()):
         vals = list(z_values.values())
@@ -207,6 +211,11 @@ def comparar(req: ComparisonRequest):
 
 
 # Serve the built frontend (README ruta A). Needs frontend/dist (npm run build).
-_dist = Path(__file__).resolve().parents[3] / "frontend" / "dist"
-if _dist.exists():
+_dist = Path(
+    os.environ.get(
+        "SOLVER_FRONTEND_DIST",
+        Path(__file__).resolve().parents[3] / "frontend" / "dist",
+    )
+)
+if _dist.is_dir():
     app.mount("/", StaticFiles(directory=_dist, html=True), name="frontend")
