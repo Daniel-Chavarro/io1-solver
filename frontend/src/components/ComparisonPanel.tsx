@@ -59,7 +59,7 @@ export function ComparisonPanel({ problem }: Props) {
       <header>
         <h2 className="font-display text-xl font-semibold">Comparación</h2>
         <p className="mt-1 max-w-2xl text-sm text-ink-soft">
-          Simplex y Gran M ejecutados sobre{" "}
+          Simplex, Gran M y Simplex Dual ejecutados sobre{" "}
           <span className="font-medium">{problem.name}</span>: estado final,
           tablas generadas, dimensiones del tableau y tiempo de cómputo en el
           servidor.
