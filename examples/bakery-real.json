@@ -204,6 +204,10 @@
     "big_m": {
       "status": "optimal",
       "objective_value": "135857/36"
+    },
+    "dual_simplex": {
+      "status": "optimal",
+      "objective_value": "135857/36"
     }
   }
 }

@@ -42,7 +42,7 @@ def _rr(report):
     return {r.constraint: (r.current, r.range) for r in report.rhs_ranges}
 
 
-@pytest.mark.parametrize("method", ["simplex", "big_m"])
+@pytest.mark.parametrize("method", ["simplex", "big_m", "dual_simplex"])
 def test_grupo1_full_report(method):
     report = analyze(Problem(**_example("simplex-grupo1")), REGISTRY[method])
     assert _sp(report) == {
@@ -85,7 +85,8 @@ def test_nonbasic_min_big_m_has_plus_inf_range():
     assert _sp(report) == {"c1": ("3/2", True), "c2": ("1/2", True)}
 
 
-def test_contract_bakery_example_big_m():
+@pytest.mark.parametrize("method", ["big_m", "dual_simplex"])
+def test_contract_bakery_example(method):
     p = Problem(
         name="b",
         variables=[{"name": "pandesal", "unit": "lotes"}, {"name": "hojaldre", "unit": "lotes"}],
@@ -95,13 +96,12 @@ def test_contract_bakery_example_big_m():
             {"name": "demanda_hojaldre_min", "coefficients": ["0", "1"], "op": ">=", "rhs": "5"},
         ],
     )
-    report = analyze(p, REGISTRY["big_m"])
+    report = analyze(p, REGISTRY[method])
     assert _sp(report) == {"horno": ("40", True), "demanda_hojaldre_min": ("-10", True)}
     assert _rr(report) == {
         "horno": ("40", ("5", "+inf")),
         "demanda_hojaldre_min": ("5", ("0", "40")),
     }
-
 
 def test_negative_rhs_keeps_original_sign_and_range():
     # c2: -x1 - x2 <= -5 (non-binding at x1+x2 = 10); b2 may fall to -10.
@@ -112,11 +112,12 @@ def test_negative_rhs_keeps_original_sign_and_range():
     assert _rr(report)["c2"] == ("-5", ("-10", "+inf"))
 
 
-def test_equality_constraint_and_binding_le_in_min():
+@pytest.mark.parametrize("method", ["big_m", "dual_simplex"])
+def test_equality_constraint_and_binding_le_in_min(method):
     # x1 + x2 = 10, x1 <= 4  ->  x = (4, 6), Z = 26
     p = _problem("min", ["2", "3"],
                  [(["1", "1"], "=", "10"), (["1", "0"], "<=", "4")])
-    report = analyze(p, REGISTRY["big_m"])
+    report = analyze(p, REGISTRY[method])
     assert _sp(report) == {"c1": ("3", True), "c2": ("-1", True)}
     assert _rr(report) == {"c1": ("10", ("4", "+inf")), "c2": ("4", ("0", "10"))}
 
@@ -138,9 +139,10 @@ def test_api_simplex_with_ge_is_method_not_admissible():
     assert r.json()["code"] == "METHOD_NOT_ADMISSIBLE"
 
 
-def test_api_bakery_real_big_m_returns_report():
+@pytest.mark.parametrize("method", ["big_m", "dual_simplex"])
+def test_api_bakery_real_returns_report(method):
     r = client.post("/api/sensibilidad",
-                    json={"method": "big_m", "problem": _example("bakery-real")})
+                    json={"method": method, "problem": _example("bakery-real")})
     assert r.status_code == 200
     body = r.json()
     n_cons = len(_example("bakery-real")["constraints"])

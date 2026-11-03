@@ -120,8 +120,14 @@ def _comparison_verdict(
     same_objective: bool | None,
     used_transform: bool = False,
 ) -> str:
+    if any(r.status == "unbounded" for r in results.values()):
+        return "El problema no está acotado."
+    if any(r.status == "infeasible" for r in results.values()):
+        return "El problema no tiene solución factible (infactible)."
+
     s = results.get("simplex")
     b = results.get("big_m")
+    d = results.get("dual_simplex")
     if s is None or b is None:
         return "Comparación disponible cuando ambos métodos estén registrados."
 
@@ -150,6 +156,8 @@ def _comparison_verdict(
     if s.status == "not_admissible":
         if b.status == "optimal":
             z_b = z_values.get("big_m", "")
+            if d and d.status == "optimal":
+                return f"El problema no está en forma estándar para Simplex; Gran M y Simplex Dual convergen a la misma solución óptima (Z = {z_b})."
             return (
                 f"No fue posible aplicar transformación al problema equivalente en Simplex estándar "
                 f"(por igualdades '=', lados derechos negativos o cotas incompatibles); "
@@ -166,21 +174,7 @@ def _comparison_verdict(
                 f"determinó que el problema no está acotado tras {b.iterations} tablas."
             )
 
-    if s.status == "unbounded" and b.status == "unbounded":
-        return (
-            f"Ambos métodos determinaron que el problema no está acotado "
-            f"(Simplex en {s.iterations} tablas y Gran M en {b.iterations} tablas)."
-        )
-
-    if s.status == "infeasible" and b.status == "infeasible":
-        return (
-            f"Ambos métodos determinaron que el problema es infactible "
-            f"(Simplex en {s.iterations} tablas y Gran M en {b.iterations} tablas)."
-        )
-
-    return (
-        f"Simplex terminó con estado '{s.status}' y Gran M con estado '{b.status}'."
-    )
+    return "Comparación completada."
 
 
 @app.post("/api/comparar")
@@ -202,17 +196,16 @@ def comparar(req: ComparisonRequest):
             results[method_id] = MethodSummary(method=method_id, status="not_implemented")
         except MethodNotAdmissibleError:
             results[method_id] = MethodSummary(method=method_id, status="not_admissible")
-
     same = None
     optimal_vals = [z_values[m] for m, r in results.items() if r.status == "optimal" and m in z_values]
-    active_results = [r for r in results.values() if r.status not in ("not_implemented", "not_admissible")]
-    if len(optimal_vals) >= 2 and len(optimal_vals) == len(active_results):
+    if len(optimal_vals) == len(results):
         same = len(set(optimal_vals)) == 1
     used_transform = uses_equivalent_transform(req.problem)
     return Comparison(
         results=results,
         same_objective=same,
-        verdict=_comparison_verdict(results, z_values, same, used_transform=used_transform))
+        verdict=_comparison_verdict(results, z_values, same, used_transform=used_transform),
+    )
 
 
 # Serve the built frontend (README ruta A). Needs frontend/dist (npm run build).

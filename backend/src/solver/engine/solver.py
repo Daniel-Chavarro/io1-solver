@@ -13,6 +13,7 @@ normalizes min->max and knows nothing about artificial variables.
 """
 from dataclasses import dataclass, field
 from typing import Literal
+from fractions import Fraction
 
 from .tableau import Tableau
 
@@ -30,7 +31,7 @@ class Iteration:
 
 @dataclass
 class EngineResult:
-    status: Literal["optimal", "unbounded"]
+    status: Literal["optimal", "unbounded", "infeasible"]
     iterations: list[Iteration]
     final: Tableau
 
@@ -78,4 +79,79 @@ def solve(initial: Tableau, max_iter: int = 200) -> EngineResult:
         )
         iterations.append(iteration)
     
+    raise RuntimeError(f"Maximum iterations ({max_iter}) exceeded. Possible cycling or bug in the algorithm.")
+
+
+def solve_dual(initial: Tableau, max_iter: int = 200) -> EngineResult:
+    """
+    Solve a linear programming problem using the dual simplex method,
+    transitioning to primal simplex if the tableau becomes primal-feasible
+    but is not yet optimal.
+    """
+    tableau: Tableau = initial
+    iterations: list[Iteration] = []
+
+    for i in range(max_iter + 1):
+        if not tableau.is_primal_feasible():
+            # Dual simplex phase: pick leaving row with most negative RHS
+            if any(
+                row.cells[-1] < Fraction(0) and all(c >= Fraction(0) for c in row.cells[:-1])
+                for row in tableau.rows
+            ):
+                return EngineResult(status="infeasible", iterations=iterations, final=tableau)
+
+            leaving, _ = tableau.get_dual_leaving_variable()
+            if leaving is None:
+                return EngineResult(status="infeasible", iterations=iterations, final=tableau)
+
+            entering, ratios, ties = tableau.get_dual_entering_variable(leaving)
+            if entering is None:
+                return EngineResult(status="infeasible", iterations=iterations, final=tableau)
+
+            if i == max_iter:
+                break
+
+            pivot_value = tableau.get_pivot_value(leaving, entering)
+            tableau = tableau.pivot(leaving, entering).evaluate()
+            iterations.append(
+                Iteration(
+                    number=i + 1,
+                    tableau=tableau,
+                    entering=entering,
+                    leaving=leaving,
+                    pivot=str(pivot_value),
+                    ratios=ratios,
+                    ties=ties,
+                )
+            )
+        else:
+            # Primal simplex phase: table is primal feasible, check optimality
+            if tableau.is_optimal():
+                return EngineResult(status="optimal", iterations=iterations, final=tableau)
+
+            entering = tableau.get_entering_variable()
+            if entering is None:
+                return EngineResult(status="optimal", iterations=iterations, final=tableau)
+
+            leaving, ratios, ties = tableau.get_leaving_variable(entering)
+            if leaving is None:
+                return EngineResult(status="unbounded", iterations=iterations, final=tableau)
+
+            if i == max_iter:
+                break
+
+            pivot_value = tableau.get_pivot_value(leaving, entering)
+            tableau = tableau.pivot(leaving, entering).evaluate()
+            iterations.append(
+                Iteration(
+                    number=i + 1,
+                    tableau=tableau,
+                    entering=entering,
+                    leaving=leaving,
+                    pivot=str(pivot_value),
+                    ratios=[str(r) for r in ratios],
+                    ties=ties,
+                )
+            )
+
     raise RuntimeError(f"Maximum iterations ({max_iter}) exceeded. Possible cycling or bug in the algorithm.")
